@@ -1,0 +1,9 @@
+Debug/
+Release/
+*.sdf
+*.suo
+PsgGen/Debug/
+PsgGen/Release/
+ipch/
+*.vcxproj.user
+*.opensdf
