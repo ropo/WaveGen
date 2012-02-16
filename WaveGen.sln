@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PsgGen", "PsgGen\PsgGen.vcxproj", "{E241F073-CBB1-469A-962C-2127EF0C6AA5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WaveGen", "WaveGen.vcxproj", "{E241F073-CBB1-469A-962C-2127EF0C6AA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

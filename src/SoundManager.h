@@ -18,16 +18,16 @@ public:
 
 
 private:
-	void Charge( void *pBuf, size_t byteSize );
+	void Store( void *pBuf, size_t byteSize );
 
 private:
 	typedef struct tagEFFECTINFO{
-		int	handle;
+		DWORD			handle;
 		SoundEffectSet *pBase;
 	}EFFECTINFO;
 
 	float	m_bufferSec;
-	LPDIRECTSOUND8	m_pDS8;
+	LPDIRECTSOUND8	m_pDSDev;
 	LPDIRECTSOUNDBUFFER	m_pDSB;
 	WAVEFORMATEX m_wfx;
 	typedef std::vector<EFFECTINFO>		EFFECTSETLIST;

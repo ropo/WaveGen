@@ -8,16 +8,14 @@ SoundEffectSet::~SoundEffectSet()
 {
 	Release();
 }
-void SoundEffectSet::GetWave( float *pOutLeft, float *pOutRight )
+void SoundEffectSet::GetWave( float *pLeft, float *pRight, size_t blockSize )
 {
-	float wave = 0;
 	for( EFFECTLISTITR itr = m_effecters.begin(); itr!=m_effecters.end(); ++itr ) {
-		wave += (*itr)->Effect( wave );
+		(*itr)->Effect( pLeft, blockSize );
 	}
-	if( wave < -1.0f ) wave = -1.0f;
-	else if( wave > 1.0f ) wave = 1.0f;
 
-	*pOutLeft = *pOutRight = wave;
+	// todo: pan
+	memcpy( pRight, pLeft, blockSize * sizeof(float) );
 }
 void SoundEffectSet::Push( SoundEffectBase *pSEB )
 {

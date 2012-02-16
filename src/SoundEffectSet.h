@@ -6,7 +6,7 @@ public:
 	SoundEffectSet( float pan = 0.0f /* -1(L) 0 +1(R) */ );
 	virtual ~SoundEffectSet();
 
-	void GetWave( float *pOutLeft, float *pOutRight );
+	void GetWave( float *pLeft, float *pRight, size_t blockSize );
 	void Push( SoundEffectBase *pSEB );
 	void Release();
 

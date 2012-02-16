@@ -1,0 +1,37 @@
+﻿#pragma once
+
+// 単調波形生成
+class EffectGen : public SoundEffectBase
+{
+public:
+	enum eTYPE{
+		 SQUARE		// 矩形波
+		,TRIANGLE	// 三角波
+		,SAW		// のこぎり波
+		,SINEWAVE	// 正弦波
+		,NOISE		// ノイズ
+		,SILENT		// 無音
+	};
+
+	EffectGen( float freq, eTYPE type );
+	virtual ~EffectGen();
+	void Release();
+	void Reset();
+	void Effect( float *pBuffer, size_t size );
+
+	void ChangeFreq( float freq );
+	void ChangeType( eTYPE type );
+
+private:
+	float EffectSquare( bool isFirst );
+	float EffectTriangle( bool isFirst );
+	float EffectSaw( bool isFirst );
+	float EffectSinewave( bool isFirst );
+	float EffectNoise( bool isFirst );
+	float EffectSilent( bool isFirst );
+
+	float(EffectGen::*m_fncEffect)( bool isFirst );
+	float	m_tph;
+	float	m_blockCount;
+	float	m_noise;
+};

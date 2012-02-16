@@ -1,9 +1,9 @@
-Debug/
-Release/
+Debug/*
+Release/*
+ipch/*
 *.sdf
 *.suo
-PsgGen/Debug/
-PsgGen/Release/
-ipch/
 *.vcxproj.user
 *.opensdf
+
+!Release/WaveGen.exe
