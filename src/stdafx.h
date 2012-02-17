@@ -10,10 +10,12 @@
 #include <dsound.h> 
 #pragma comment ( lib, "dsound.lib" )
 
+#include "WinBase.h"
 #include "SoundManager.h"
 #include "SoundEffectSet.h"
 #include "SoundEffectBase.h"
 #include "EffectGen.h"
+#include "AppMain.h"
 
 template<typename T> inline float MinMax( T v, T min, T max ) {
 	if( v > max )	return max;
