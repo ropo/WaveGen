@@ -80,6 +80,9 @@
     <ClCompile Include="src\SoundEffectBase.cpp" />
     <ClCompile Include="src\SoundEffectSet.cpp" />
     <ClCompile Include="src\SoundManager.cpp" />
+    <ClCompile Include="src\SoundOutputDS.cpp" />
+    <ClCompile Include="src\SoundOutputBase.cpp" />
+    <ClCompile Include="src\SoundOutputWaveFile.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -92,6 +95,9 @@
     <ClInclude Include="src\SoundEffectBase.h" />
     <ClInclude Include="src\SoundEffectSet.h" />
     <ClInclude Include="src\SoundManager.h" />
+    <ClInclude Include="src\SoundOutputDS.h" />
+    <ClInclude Include="src\SoundOutputBase.h" />
+    <ClInclude Include="src\SoundOutputWaveFile.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\targetver.h" />
     <ClInclude Include="src\WinBase.h" />

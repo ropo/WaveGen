@@ -6,16 +6,15 @@ class SoundEffectSet;
 class SoundManager
 {
 public:
-	SoundManager( float bufferSec );
+	SoundManager();
 	virtual ~SoundManager();
-	bool Create( HWND hWnd );
 	void Release();
 
+	void SetOutput( SoundOutputBase *pSoundOutput );
 	DWORD Push( SoundEffectSet *pSBB );
 	DWORD Push( SoundEffectSet *pSEB, int updateHandle );
 	bool Remove( DWORD handle );
 	void Tick();
-
 
 private:
 	void Store( void *pBuf, size_t byteSize );
@@ -26,16 +25,11 @@ private:
 		SoundEffectSet *pBase;
 	}EFFECTINFO;
 
-	float	m_bufferSec;
-	LPDIRECTSOUND8	m_pDSDev;
-	LPDIRECTSOUNDBUFFER	m_pDSB;
-	WAVEFORMATEX m_wfx;
+	SoundOutputBase *m_pOutputBase;
+
 	typedef std::vector<EFFECTINFO>		EFFECTSETLIST;
 	typedef EFFECTSETLIST::iterator		EFFECTSETLISTITR;
 	EFFECTSETLIST m_effectSet;
 	DWORD m_effectHandle;
-
-	DWORD m_writePos;
-	DWORD GetBufferByte() const;
 };
 

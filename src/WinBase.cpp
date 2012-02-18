@@ -1,23 +1,6 @@
 ﻿#include "stdafx.h"
 
-//--------------------------------------------------------------------------
-// ウインドウサイズを変更する
-//--------------------------------------------------------------------------
-void changeWindowSize( HWND hWnd, int w, int h )
-{
-	RECT rect;
-	GetWindowRect( hWnd, &rect );
-	ClientToScreen( hWnd, (POINT*)&rect );
-	rect.right = rect.left + w;
-	rect.bottom= rect.top  + h;
-	AdjustWindowRect( &rect, GetWindowLong( hWnd, GWL_STYLE ), GetMenu(hWnd)?TRUE:FALSE );
-	MoveWindow( hWnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, TRUE );
-}
-
-//--------------------------------------------------------------------------
-// メインウインドウプロシージャー
-//--------------------------------------------------------------------------
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) 
 	{
@@ -30,11 +13,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hdc = BeginPaint(hWnd, &ps);
 
 			RECT rect={10,10,200,200};
-			DrawText( hdc,  L"[Q]:終了\n\n"
-							L"EffectGen\n"
+			DrawText( hdc,  L"EffectGen\n"
 							L" [S]:矩形波 [A]:のこぎり波 [T]:三角波 [I]:正弦波 [N]:ノイズ [0]:無音\n"
-							L" [1]～[9]:周波数変更(プリセット)\n", -1, &rect, DT_NOCLIP );
-
+							L" [1]～[9]:周波数変更(プリセット)\n"
+							L"\n"
+							L"SoundOutput\n"
+							L" [D]:スピーカー出力\n"
+							L" [F]:ファイル出力 (output.wav)\n"
+			, -1, &rect, DT_NOCLIP );
 			EndPaint(hWnd, &ps);
 			}break;
 
@@ -51,10 +37,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-//--------------------------------------------------------------------------
-// メインウインドウの構築
-//--------------------------------------------------------------------------
-HWND InitInstance( HINSTANCE hInst )
+static HWND InitInstance( HINSTANCE hInst )
 {
 	WNDCLASSEX wcex;
 	ZeroMemory( &wcex, sizeof(wcex) );
@@ -96,21 +79,14 @@ WinBase::~WinBase()
 
 int WinBase::Run(HINSTANCE hInstance, HINSTANCE, LPSTR , int nCmdShow )
 {
-	// アプリケーションの初期化を実行します。
 	m_hWnd = InitInstance( hInstance );
 	if( m_hWnd == NULL )
 		return 1;
 
-	if( Startup() == false )
+	if( Startup() )
 		return 2;
 
 	ShowWindow( m_hWnd, nCmdShow );
-
-
-#ifdef _DEBUG
-	::_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
-//	_CrtSetBreakAlloc( 185 );
-#endif
 
 	// メインループ
 	bool exit = false;

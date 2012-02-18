@@ -1,9 +1,11 @@
 Debug/*
 Release/*
 ipch/*
+*.wav
 *.sdf
 *.suo
 *.vcxproj.user
 *.opensdf
+document.xlsx
 
 !Release/WaveGen.exe

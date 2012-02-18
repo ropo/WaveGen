@@ -2,11 +2,17 @@
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCommand, int nCmdShow )
 {
+#ifdef _DEBUG
+	::_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
+//	_CrtSetBreakAlloc( 144 );
+#endif
+
 	AppMain app;
 	return app.Run( hInstance, hPrevInstance, lpCommand, nCmdShow );
 }
 
 AppMain::AppMain()
+	: m_pSoundOutput( NULL )
 {
 }
 
@@ -16,10 +22,15 @@ AppMain::~AppMain()
 
 bool AppMain::Startup()
 {
-	// サウンドドライバとマネージャの作成
-	m_pSoundMan = new SoundManager( 0.05f );
-	m_pSoundMan->Create( m_hWnd );
+	// 出力デバイスの作成
+	if( ChangeOutputDS() )
+		return true;
 
+	// サウンドマネージャの作成
+	m_pSoundMan = new SoundManager();
+	m_pSoundMan->SetOutput( m_pSoundOutput );
+
+	// 単純波形ジェネレータの作成
 	{
 		SoundEffectSet *pSet = new SoundEffectSet( 0 );
 
@@ -28,7 +39,22 @@ bool AppMain::Startup()
 
 		m_pSoundMan->Push( pSet );
 	}
-	return true;
+
+	return false;
+}
+
+bool AppMain::ChangeOutputDS()
+{
+	SAFE_DELETE( m_pSoundOutput );
+	m_pSoundOutput = new SoundOutputDS();
+	return ((SoundOutputDS*)m_pSoundOutput)->Create( m_hWnd, 0.25f );
+}
+
+bool AppMain::ChangeOutputWaveFile()
+{
+	SAFE_DELETE( m_pSoundOutput );
+	m_pSoundOutput = new SoundOutputWaveFile();
+	return ((SoundOutputWaveFile*)m_pSoundOutput)->Create( L"output.wav" );
 }
 
 bool AppMain::Tick()
@@ -53,6 +79,9 @@ bool AppMain::Tick()
 	if( keys['8'] & 0x80 )	m_pGen->ChangeFreq( 523.3f );			
 	if( keys['9'] & 0x80 )	m_pGen->ChangeFreq( 587.3f );			
 
+	if( keys['D'] & 0x80 ){	ChangeOutputDS();		m_pSoundMan->SetOutput( m_pSoundOutput );	}
+	if( keys['F'] & 0x80 ){	ChangeOutputWaveFile();	m_pSoundMan->SetOutput( m_pSoundOutput );	}
+
 	m_pSoundMan->Tick();
 	Sleep( 1 );
 
@@ -61,8 +90,7 @@ bool AppMain::Tick()
 
 void AppMain::Release()
 {
-	m_pSoundMan->Release();
-	delete m_pSoundMan;
-	m_pSoundMan = NULL;
+	SAFE_DELETE( m_pSoundMan );
+	SAFE_DELETE( m_pSoundOutput );
 }
 

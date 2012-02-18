@@ -2,14 +2,18 @@
 
 #include "targetver.h"
 
-#include <stdio.h>
-#include <tchar.h>
-#include <vector>
-#include <conio.h>
-
+#include <windows.h>
+#include <mmsystem.h>
+#pragma comment ( lib, "winmm.lib" )
 #include <dsound.h> 
 #pragma comment ( lib, "dsound.lib" )
 
+#include <vector>
+
+
+#include "SoundOutputBase.h"
+#include "SoundOutputDS.h"
+#include "SoundOutputWaveFile.h"
 #include "WinBase.h"
 #include "SoundManager.h"
 #include "SoundEffectSet.h"
@@ -22,5 +26,7 @@ template<typename T> inline float MinMax( T v, T min, T max ) {
 	if( v < min )	return min;
 	return v;
 }
+#define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=NULL;}}
+#define SAFE_DELETE(x)	{if(x){delete(x);(x)=NULL;}}
 
 #define BASE_FREQ	44100

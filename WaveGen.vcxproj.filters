@@ -15,13 +15,16 @@
     <Filter Include="ヘッダー ファイル\Effect">
       <UniqueIdentifier>{d9a9431b-8649-4adc-9aaf-5d26d505cee1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Ouput">
+      <UniqueIdentifier>{1230d42b-d4b1-4219-aa0b-3466cf7370fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Ouput">
+      <UniqueIdentifier>{fee1660c-02b2-4b72-b20e-fe54f81b619f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\stdafx.cpp">
       <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SoundManager.cpp">
-      <Filter>ソース ファイル\Effect</Filter>
     </ClCompile>
     <ClCompile Include="src\SoundEffectBase.cpp">
       <Filter>ソース ファイル\Effect</Filter>
@@ -38,6 +41,18 @@
     <ClCompile Include="src\WinBase.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\SoundOutputBase.cpp">
+      <Filter>ソース ファイル\Ouput</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SoundManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SoundOutputDS.cpp">
+      <Filter>ソース ファイル\Ouput</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SoundOutputWaveFile.cpp">
+      <Filter>ソース ファイル\Ouput</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stdafx.h">
@@ -45,9 +60,6 @@
     </ClInclude>
     <ClInclude Include="src\targetver.h">
       <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="src\SoundManager.h">
-      <Filter>ヘッダー ファイル\Effect</Filter>
     </ClInclude>
     <ClInclude Include="src\SoundEffectBase.h">
       <Filter>ヘッダー ファイル\Effect</Filter>
@@ -63,6 +75,18 @@
     </ClInclude>
     <ClInclude Include="src\WinBase.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SoundOutputBase.h">
+      <Filter>ヘッダー ファイル\Ouput</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SoundManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SoundOutputDS.h">
+      <Filter>ヘッダー ファイル\Ouput</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SoundOutputWaveFile.h">
+      <Filter>ヘッダー ファイル\Ouput</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
