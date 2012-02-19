@@ -17,6 +17,6 @@ public:
 
 private:
 	SoundOutputBase	*m_pSoundOutput;
+	SeqInputBase	*m_pSeqInputBase;
 	SoundManager	*m_pSoundMan;
-	EffectGen		*m_pGen;
 };

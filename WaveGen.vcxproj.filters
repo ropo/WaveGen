@@ -21,6 +21,12 @@
     <Filter Include="ヘッダー ファイル\Ouput">
       <UniqueIdentifier>{fee1660c-02b2-4b72-b20e-fe54f81b619f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Input">
+      <UniqueIdentifier>{6e492e52-df0a-42e7-bdaa-667f37b26172}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Input">
+      <UniqueIdentifier>{bf403812-d3c1-48eb-bd00-6e766efca280}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\stdafx.cpp">
@@ -52,6 +58,12 @@
     </ClCompile>
     <ClCompile Include="src\SoundOutputWaveFile.cpp">
       <Filter>ソース ファイル\Ouput</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SeqInputBase.cpp">
+      <Filter>ソース ファイル\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SeqInputConst.cpp">
+      <Filter>ソース ファイル\Input</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -87,6 +99,12 @@
     </ClInclude>
     <ClInclude Include="src\SoundOutputWaveFile.h">
       <Filter>ヘッダー ファイル\Ouput</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SeqInputBase.h">
+      <Filter>ヘッダー ファイル\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SeqInputConst.h">
+      <Filter>ヘッダー ファイル\Input</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

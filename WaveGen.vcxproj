@@ -77,6 +77,8 @@
   <ItemGroup>
     <ClCompile Include="src\EffectGen.cpp" />
     <ClCompile Include="src\AppMain.cpp" />
+    <ClCompile Include="src\SeqInputBase.cpp" />
+    <ClCompile Include="src\SeqInputConst.cpp" />
     <ClCompile Include="src\SoundEffectBase.cpp" />
     <ClCompile Include="src\SoundEffectSet.cpp" />
     <ClCompile Include="src\SoundManager.cpp" />
@@ -92,6 +94,8 @@
   <ItemGroup>
     <ClInclude Include="src\AppMain.h" />
     <ClInclude Include="src\EffectGen.h" />
+    <ClInclude Include="src\SeqInputBase.h" />
+    <ClInclude Include="src\SeqInputConst.h" />
     <ClInclude Include="src\SoundEffectBase.h" />
     <ClInclude Include="src\SoundEffectSet.h" />
     <ClInclude Include="src\SoundManager.h" />

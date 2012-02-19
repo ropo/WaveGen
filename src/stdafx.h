@@ -9,16 +9,23 @@
 #pragma comment ( lib, "dsound.lib" )
 
 #include <vector>
+#include <fstream>
 
+#define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=NULL;}}
+#define SAFE_DELETE(x)	{if(x){delete(x);(x)=NULL;}}
+
+#define BASE_FREQ	44100
 
 #include "SoundOutputBase.h"
 #include "SoundOutputDS.h"
 #include "SoundOutputWaveFile.h"
 #include "WinBase.h"
+#include "SeqInputBase.h"
 #include "SoundManager.h"
 #include "SoundEffectSet.h"
 #include "SoundEffectBase.h"
 #include "EffectGen.h"
+#include "SeqInputConst.h"
 #include "AppMain.h"
 
 template<typename T> inline float MinMax( T v, T min, T max ) {
@@ -26,7 +33,3 @@ template<typename T> inline float MinMax( T v, T min, T max ) {
 	if( v < min )	return min;
 	return v;
 }
-#define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=NULL;}}
-#define SAFE_DELETE(x)	{if(x){delete(x);(x)=NULL;}}
-
-#define BASE_FREQ	44100

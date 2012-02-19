@@ -11,8 +11,8 @@ public:
 	void Release();
 
 	void SetOutput( SoundOutputBase *pSoundOutput );
-	DWORD Push( SoundEffectSet *pSBB );
-	DWORD Push( SoundEffectSet *pSEB, int updateHandle );
+	DWORD Push( SoundEffectSet *pSES );
+	DWORD Push( SoundEffectSet *pSES, int updateHandle );
 	bool Remove( DWORD handle );
 	void Tick();
 

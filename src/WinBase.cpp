@@ -13,11 +13,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			hdc = BeginPaint(hWnd, &ps);
 
 			RECT rect={10,10,200,200};
-			DrawText( hdc,  L"EffectGen\n"
-							L" [S]:矩形波 [A]:のこぎり波 [T]:三角波 [I]:正弦波 [N]:ノイズ [0]:無音\n"
-							L" [1]～[9]:周波数変更(プリセット)\n"
-							L"\n"
-							L"SoundOutput\n"
+			DrawText( hdc,  L"SoundOutput\n"
 							L" [D]:スピーカー出力\n"
 							L" [F]:ファイル出力 (output.wav)\n"
 			, -1, &rect, DT_NOCLIP );

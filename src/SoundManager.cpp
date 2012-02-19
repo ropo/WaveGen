@@ -18,10 +18,10 @@ DWORD SoundManager::Push( SoundEffectSet *pSES )
 	return effectInfo.handle;
 }
 
-DWORD SoundManager::Push( SoundEffectSet *pSEB, int updateHandle )
+DWORD SoundManager::Push( SoundEffectSet *pSES, int updateHandle )
 {
 	Remove( updateHandle );
-	return Push( pSEB );
+	return Push( pSES );
 }
 
 bool SoundManager::Remove( DWORD handle )
