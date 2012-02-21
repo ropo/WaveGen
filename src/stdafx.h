@@ -11,7 +11,6 @@
 
 #include <vector>
 #include <fstream>
-#include <process.h>
 
 #define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=NULL;}}
 #define SAFE_DELETE(x)	{if(x){delete(x);(x)=NULL;}}
@@ -27,6 +26,7 @@
 #include "SoundEffectSet.h"
 #include "SoundEffectBase.h"
 #include "EffectGen.h"
+#include "SoundEffectADSR.h"
 #include "SeqInputConst.h"
 #include "SeqInputMML.h"
 #include "AppMain.h"

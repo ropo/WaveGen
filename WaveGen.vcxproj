@@ -80,6 +80,7 @@
     <ClCompile Include="src\SeqInputBase.cpp" />
     <ClCompile Include="src\SeqInputConst.cpp" />
     <ClCompile Include="src\SeqInputMML.cpp" />
+    <ClCompile Include="src\SoundEffectADSR.cpp" />
     <ClCompile Include="src\SoundEffectBase.cpp" />
     <ClCompile Include="src\SoundEffectSet.cpp" />
     <ClCompile Include="src\SoundManager.cpp" />
@@ -98,6 +99,7 @@
     <ClInclude Include="src\SeqInputBase.h" />
     <ClInclude Include="src\SeqInputConst.h" />
     <ClInclude Include="src\SeqInputMML.h" />
+    <ClInclude Include="src\SoundEffectADSR.h" />
     <ClInclude Include="src\SoundEffectBase.h" />
     <ClInclude Include="src\SoundEffectSet.h" />
     <ClInclude Include="src\SoundManager.h" />

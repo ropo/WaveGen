@@ -21,6 +21,7 @@ private:
 
 		SoundEffectSet	*pSoundSet;
 		EffectGen		*pGen;
+		SoundEffectADSR	*pADSR;
 	}SOUNDSET;
 
 	enum eCMD {

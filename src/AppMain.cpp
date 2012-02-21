@@ -63,19 +63,31 @@ bool AppMain::Startup()
 	m_pSoundMan = new SoundManager();
 	m_pSoundMan->SetOutput( m_pSoundOutput );
 
+	//
+	std::wifstream ifs( L"sample.mml", std::ios::binary );
+	if( ifs.fail() ) {
+		ifs.open( L"../sample.mml", std::ios::binary );
+		if( ifs.fail() )
+			return true;
+	}
+
+	size_t fileSize = (size_t)ifs.seekg( 0, std::ios::end ).tellg();
+	ifs.seekg( 0, std::ios::beg );
+
+	wchar_t *pMML = new wchar_t[fileSize+1];
+	ifs.read( pMML, fileSize );
+	ifs.close();
+	pMML[ fileSize ] = '\0';
+
 	// プレイヤーをセット
 	m_pSeqInputBase = new SeqInputMML();
 	((SeqInputMML*)m_pSeqInputBase)->Init( m_pSoundMan );
-	((SeqInputMML*)m_pSeqInputBase)->ComplieMML( 
-		L"t160 o3 l8 q70 @0"
-		L"c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< <"
-		L"a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< b->b-< b->b-< b->b-< b->b-<  >"
-		L"c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< <"
-		L"a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< b->b-< b->b-< b->b-< b->b-<  >"
-	);
+	((SeqInputMML*)m_pSeqInputBase)->ComplieMML( pMML );
 	((SeqInputMML*)m_pSeqInputBase)->Play( timeGetTime() );
 
 	ResumeThread( m_threadHandle );
+
+	delete pMML;
 
 	return false;
 }

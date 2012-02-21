@@ -29,7 +29,12 @@ bool SeqInputMML::Init( SoundManager *pManager )
 	ss.pSoundSet = new SoundEffectSet();
 	ss.pGen		 = new EffectGen( 220, EffectGen::SILENT );
 	ss.pSoundSet->Push( ss.pGen );
+	ss.pADSR	 = new SoundEffectADSR();						// ADSR エフェクタを連結
+	ss.pSoundSet->Push( ss.pADSR );									// …をサウンドセットにつっこむ
 	m_pManager->Push( ss.pSoundSet );
+
+	// ADSR パラメータ設定
+	ss.pADSR->ChangeParam( 1.0f, 0.01f, 0.005f, 0.8f, 0.3f );
 
 	m_holder = ss;
 
@@ -83,12 +88,13 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 							case 4:	pg = EffectGen::NOISE;		break;
 						}
 						m_holder.pGen->ChangeType( pg );
+						m_holder.pADSR->NoteOn();
 					}else{
-						m_holder.pGen->ChangeType( EffectGen::SILENT );
+						m_holder.pADSR->NoteOff();
 					}
 				break;
 		case CMD_NOTE_OFF:
-					m_holder.pGen->ChangeType( EffectGen::SILENT );
+					m_holder.pADSR->NoteOff();
 				break;
 		case CMD_PROGRAM_CHANGE:
 					m_curProgram = (BYTE)token.param;
@@ -164,7 +170,7 @@ DWORD SeqInputMML::GetNumber( const wchar_t *pString, const wchar_t **ppExit ) c
 	return num;
 }
 
-// 音長を取得 0 は休符
+// 音長を取得 -1 は負数
 bool SeqInputMML::GetNote( const wchar_t *pString, DWORD defaultTick, char *pNote, DWORD *pGateTime, const wchar_t **ppExit ) const
 {
 	int note = -1;
@@ -182,7 +188,8 @@ bool SeqInputMML::GetNote( const wchar_t *pString, DWORD defaultTick, char *pNot
 		if( note < 0 || note > 11 )
 			return true;
 	}else if( *pString >= 'r' ) {
-		note = 0;
+		note = -1;
+		pString++;
 	}
 
 	DWORD gateTime = GetNoteTick( pString, defaultTick, &pString );
@@ -347,17 +354,24 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompliePhase2( const wchar_t *pSour
 						DWORD gateTime;
 						if( GetNote( pSource, defaultTick, &note, &gateTime, &pSource ) )
 							goto err;
-						note += (char)(currentOctave * 12);
 
-						token.command = CMD_NOTE_ON;
-						token.param = note;
-						token.gateTick = gateTime * noteOnGate / 100;
-						tokens.push_back( token );
+						if( note >= 0 ) {
+							note += (char)(currentOctave * 12);
+							token.command = CMD_NOTE_ON;
+							token.param = note;
+							token.gateTick = gateTime * noteOnGate / 100;
+							tokens.push_back( token );
 
-						token.command = CMD_NOTE_OFF;
-						token.param = note;
-						token.gateTick = gateTime - token.gateTick;
-						tokens.push_back( token );
+							token.command = CMD_NOTE_OFF;
+							token.param = note;
+							token.gateTick = gateTime - token.gateTick;
+							tokens.push_back( token );
+						}else{
+							token.command = CMD_NOTE_ON;
+							token.param = 0;
+							token.gateTick = gateTime;
+							tokens.push_back( token );
+						}
 					}break;
 			default:	pSource++;
 		}
