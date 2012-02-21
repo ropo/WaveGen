@@ -3,6 +3,7 @@
 #include "targetver.h"
 
 #include <windows.h>
+#include <WinBase.h>
 #include <mmsystem.h>
 #pragma comment ( lib, "winmm.lib" )
 #include <dsound.h> 
@@ -10,6 +11,7 @@
 
 #include <vector>
 #include <fstream>
+#include <process.h>
 
 #define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=NULL;}}
 #define SAFE_DELETE(x)	{if(x){delete(x);(x)=NULL;}}
