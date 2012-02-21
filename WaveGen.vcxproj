@@ -47,10 +47,10 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -79,6 +79,7 @@
     <ClCompile Include="src\AppMain.cpp" />
     <ClCompile Include="src\SeqInputBase.cpp" />
     <ClCompile Include="src\SeqInputConst.cpp" />
+    <ClCompile Include="src\SeqInputMML.cpp" />
     <ClCompile Include="src\SoundEffectBase.cpp" />
     <ClCompile Include="src\SoundEffectSet.cpp" />
     <ClCompile Include="src\SoundManager.cpp" />
@@ -96,6 +97,7 @@
     <ClInclude Include="src\EffectGen.h" />
     <ClInclude Include="src\SeqInputBase.h" />
     <ClInclude Include="src\SeqInputConst.h" />
+    <ClInclude Include="src\SeqInputMML.h" />
     <ClInclude Include="src\SoundEffectBase.h" />
     <ClInclude Include="src\SoundEffectSet.h" />
     <ClInclude Include="src\SoundManager.h" />

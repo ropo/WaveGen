@@ -98,7 +98,8 @@ int WinBase::Run(HINSTANCE hInstance, HINSTANCE, LPSTR , int nCmdShow )
 			DispatchMessage(&msg);
 		}
 
-		Tick();
+		if( Tick() )
+			DestroyWindow( m_hWnd );
 	}
 
 	return 0;

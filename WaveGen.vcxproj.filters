@@ -65,6 +65,9 @@
     <ClCompile Include="src\SeqInputConst.cpp">
       <Filter>ソース ファイル\Input</Filter>
     </ClCompile>
+    <ClCompile Include="src\SeqInputMML.cpp">
+      <Filter>ソース ファイル\Input</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stdafx.h">
@@ -104,6 +107,9 @@
       <Filter>ヘッダー ファイル\Input</Filter>
     </ClInclude>
     <ClInclude Include="src\SeqInputConst.h">
+      <Filter>ヘッダー ファイル\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SeqInputMML.h">
       <Filter>ヘッダー ファイル\Input</Filter>
     </ClInclude>
   </ItemGroup>

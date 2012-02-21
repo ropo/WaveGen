@@ -28,6 +28,7 @@
 #include "SoundEffectBase.h"
 #include "EffectGen.h"
 #include "SeqInputConst.h"
+#include "SeqInputMML.h"
 #include "AppMain.h"
 
 template<typename T> inline float MinMax( T v, T min, T max ) {

@@ -34,7 +34,8 @@ DWORD AppMain::TickThread()
 	while( !m_threadIsExit ) {
 		{
 			CriticalBlock mb( &m_cs );
-			m_pSeqInputBase->Tick( timeGetTime() );
+			if( m_pSeqInputBase->Tick( timeGetTime() ) )
+				m_threadIsExit = true;
 			m_pSoundMan->Tick();
 		}
 		Sleep( 10 );
@@ -63,8 +64,16 @@ bool AppMain::Startup()
 	m_pSoundMan->SetOutput( m_pSoundOutput );
 
 	// プレイヤーをセット
-	m_pSeqInputBase = new SeqInputConst();
-	((SeqInputConst*)m_pSeqInputBase)->Init( m_pSoundMan );
+	m_pSeqInputBase = new SeqInputMML();
+	((SeqInputMML*)m_pSeqInputBase)->Init( m_pSoundMan );
+	((SeqInputMML*)m_pSeqInputBase)->ComplieMML( 
+		L"t160 o3 l8 q70 @0"
+		L"c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< <"
+		L"a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< b->b-< b->b-< b->b-< b->b-<  >"
+		L"c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< <"
+		L"a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< b->b-< b->b-< b->b-< b->b-<  >"
+	);
+	((SeqInputMML*)m_pSeqInputBase)->Play( timeGetTime() );
 
 	ResumeThread( m_threadHandle );
 
@@ -99,7 +108,10 @@ bool AppMain::Tick()
 
 	Sleep( 100 );
 
-	return true;
+	if(	m_threadIsExit )
+		return true;
+
+	return false;
 }
 
 void AppMain::Release()
