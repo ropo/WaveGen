@@ -25,15 +25,17 @@ bool SeqInputMML::Init( SoundManager *pManager )
 	m_pManager = pManager;
 
 	// サウンドセットを作成&登録
-	SOUNDSET ss;
-	ss.pSoundSet = new SoundEffectSet();
-	ss.pGen		 = new EffectGen( 220, EffectGen::SILENT );
-	ss.pSoundSet->Push( ss.pGen );
-	ss.pADSR	 = new SoundEffectADSR();						// ADSR エフェクタを連結
-	ss.pSoundSet->Push( ss.pADSR );									// …をサウンドセットにつっこむ
-	m_pManager->Push( ss.pSoundSet );
+	for( int i=0; i<MAX_TRACK; i++ ) {
+		SOUNDSET ss;
+		ss.pSoundSet = new SoundEffectSet();
+		ss.pGen		 = new EffectGen( 220, EffectGen::SILENT );
+		ss.pSoundSet->Push( ss.pGen );
+		ss.pADSR	 = new SoundEffectADSR();						// ADSR エフェクタを連結
+		ss.pSoundSet->Push( ss.pADSR );									// …をサウンドセットにつっこむ
+		m_pManager->Push( ss.pSoundSet );
 
-	m_holder = ss;
+		m_holder[i] = ss;
+	}
 
 	m_playIndex = 0;
 
@@ -69,7 +71,12 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 		return 0;
 
 	TOKEN token = m_sequence[ index ];
-	SOUNDSET *pSS = &m_holder;
+	if( token.track >= MAX_TRACK )
+		return 0;
+	if( token.track > 0 )
+		token.track=token.track;
+
+	SOUNDSET *pSS = &m_holder[ token.track ];
 
 	switch( token.command )
 	{
@@ -114,7 +121,7 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 
 bool SeqInputMML::Tick( DWORD dwTime )
 {
-	if( m_holder.pSoundSet == NULL || m_pManager == NULL )
+	if( m_pManager == NULL )
 		return true;
 	if( m_sequence.size() <= m_playIndex )
 		return true;
@@ -316,37 +323,43 @@ std::vector<std::wstring> SeqInputMML::GetParams( const wchar_t *pSource, const 
 std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSource )
 {
 	TOKEN token;
-	std::vector<TOKEN> tokens;
+	std::vector<TOKEN> tokens[ MAX_TRACK+2 ], *pTokens;
 
 	// 省略可能な値をすべて設定しておく
 	int currentOctave = 5;
+	int currentTrack = 0;
 	DWORD defaultTick = TICKCOUNT;
 	int noteOnGate = 80;
 	m_curProgram = 0;
+	pTokens = &tokens[ currentTrack ];
+
+	for( int i=0; i<MAX_TRACK; i++ ) {
+		// 音長ベースは４分音符
+		token.command = CMD_BASELENGTH;
+		token.param = TICKCOUNT / 4;
+		token.gateTick = 0;
+		tokens[i].push_back( token );
+
+		// オクターブ
+		token.command = CMD_OCTAVE;
+		token.param = 5;
+		tokens[i].push_back( token );
+
+		// 音色
+		token.command = CMD_PROGRAM_CHANGE;
+		token.param = m_curProgram;
+		tokens[i].push_back( token );
+	}
 
 	// テンポは
 	token.command = CMD_TEMPO;
 	token.param = GetTempoToTick( 128 );
 	token.gateTick = 0;
-	tokens.push_back( token );
-
-	// 音長ベースは４分音符
-	token.command = CMD_BASELENGTH;
-	token.param = TICKCOUNT / 4;
-	tokens.push_back( token );
-
-	// オクターブ
-	token.command = CMD_OCTAVE;
-	token.param = currentOctave;
-	tokens.push_back( token );
-
-	// 音色
-	token.command = CMD_PROGRAM_CHANGE;
-	token.param = m_curProgram;
-	tokens.push_back( token );
+	pTokens->push_back( token );
 
 	while( *pSource ) {
 		token.gateTick = 0;
+
 		if( wcsncmp( pSource, L"adsr(", 5 ) == 0 ) {
 			std::vector<std::wstring> params = GetParams( pSource+5, &pSource );
 			if( params.size() != 5 )
@@ -358,7 +371,15 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 			token.paramADSR.dTime = (float)_wtof( params[2].c_str() );
 			token.paramADSR.sPower = (float)_wtof( params[3].c_str() );
 			token.paramADSR.rTime = (float)_wtof( params[4].c_str() );
-			tokens.push_back( token );
+			pTokens->push_back( token );
+		}
+
+		if( wcsncmp( pSource, L"track(", 6 ) == 0 ) {
+			std::vector<std::wstring> params = GetParams( pSource+6, &pSource );
+			if( params.size() != 1 )
+				continue;	// エラーでもいいんだけどもとりあえず
+			currentTrack = _wtoi( params[0].c_str() ) % MAX_TRACK;
+			pTokens = &tokens[currentTrack];
 		}
 
 		switch( *pSource ) {
@@ -366,26 +387,26 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 						token.param = currentOctave = GetNumber( pSource+1, &pSource );
 						if( token.param == 0 )
 							goto err;
-						tokens.push_back( token );
+						pTokens->push_back( token );
 					break;
 			case 'l':	token.command = CMD_BASELENGTH;
 						token.param = defaultTick = GetNoteTick( pSource+1, defaultTick, &pSource );
 						if( token.param == 0 )
 							goto err;
-						tokens.push_back( token );
+						pTokens->push_back( token );
 					break;
 			case 't':	token.command = CMD_TEMPO;
 						token.param = GetTempoToTick( GetNumber( pSource+1, &pSource ) );
 						if( token.param == 0 )
 							goto err;
-						tokens.push_back( token );
+						pTokens->push_back( token );
 					break;
 			case '<':	currentOctave--;
 						if( currentOctave < 0 )
 							goto err;
 						token.command = CMD_OCTAVE;
 						token.param = currentOctave;
-						tokens.push_back( token );
+						pTokens->push_back( token );
 						pSource++;
 					break;
 			case '>':	currentOctave++;
@@ -393,7 +414,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 							goto err;
 						token.command = CMD_OCTAVE;
 						token.param = currentOctave;
-						tokens.push_back( token );
+						pTokens->push_back( token );
 						pSource++;
 					break;
 			case 'q':	noteOnGate = GetNumber( pSource+1, &pSource );
@@ -402,7 +423,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 					break;
 			case '@':	token.command = CMD_PROGRAM_CHANGE;
 						token.param = GetNumber( pSource+1, &pSource );
-						tokens.push_back( token );
+						pTokens->push_back( token );
 					break;
 			case 'c':	case 'd':	case 'e':	case 'f':
 			case 'g':	case 'a':	case 'b':	case 'r':{
@@ -416,30 +437,55 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 							token.command = CMD_NOTE_ON;
 							token.param = note;
 							token.gateTick = gateTime * noteOnGate / 100;
-							tokens.push_back( token );
+							pTokens->push_back( token );
 
 							token.command = CMD_NOTE_OFF;
 							token.param = note;
 							token.gateTick = gateTime - token.gateTick;
-							tokens.push_back( token );
+							pTokens->push_back( token );
 						}else{
 							token.command = CMD_NOTE_ON;
 							token.param = 0;
 							token.gateTick = gateTime;
-							tokens.push_back( token );
+							pTokens->push_back( token );
 						}
 					}break;
 			default:	pSource++;
 		}
 	}
-	token.command = CMD_END;
-	token.gateTick = 0;
-	token.param = 0;
-	tokens.push_back( token );
-	return tokens;
+
+	// tickSum & merge
+	for( BYTE i=0; i<MAX_TRACK; i++ ) {
+		DWORD dwTotalTime = 0;
+		token.command = CMD_END;
+		token.gateTick = 0;
+		tokens[i].push_back( token );
+		for( std::vector<TOKEN>::iterator itr=tokens[i].begin(); itr!=tokens[i].end(); ++itr ) {
+			itr->startTick = dwTotalTime;
+			itr->track = i;
+			dwTotalTime += itr->gateTick;
+			tokens[ MAX_TRACK ].push_back( *itr );
+		}
+	}
+
+	// sort
+	class LessToken {
+	public:
+		bool operator()(const TOKEN& riLeft, const TOKEN& riRight) const {
+			return riLeft.startTick < riRight.startTick;
+		}
+	};
+	std::sort( tokens[ MAX_TRACK ].begin(), tokens[ MAX_TRACK ].end(), LessToken() );
+
+	// tickBet
+	size_t count = tokens[MAX_TRACK].size()-1;
+	for( size_t i=0; i<count; i++ ) {
+		tokens[MAX_TRACK][i].gateTick = tokens[MAX_TRACK][i+1].startTick - tokens[MAX_TRACK][i].startTick;
+	}
+
+	return tokens[ MAX_TRACK ];
 
 err:
-	tokens.clear();
-	return tokens;
+	tokens[0].clear();
+	return tokens[0];
 }
-

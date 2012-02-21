@@ -1,5 +1,7 @@
 #pragma once
 
+#define MAX_TRACK	3
+
 class SeqInputMML : public SeqInputBase
 {
 public:
@@ -43,9 +45,11 @@ private:
 	}ADSRPARAM;
 	typedef struct tagTOKEN{
 		eCMD		command;
+		BYTE		track;
 		DWORD		param;
 		ADSRPARAM	paramADSR;
 		DWORD		gateTick;
+		DWORD		startTick;
 	}TOKEN;
 
 	const wchar_t *CompilePhase1( const wchar_t *pSource );
@@ -59,7 +63,7 @@ private:
 	void  Release();
 	float GetFreq( BYTE note ) const;
 
-	SOUNDSET				m_holder;
+	SOUNDSET				m_holder[MAX_TRACK];
 	SoundManager			*m_pManager;
 	std::vector<TOKEN>		m_sequence;			// シーケンスデータ
 	DWORD					m_playIndex;		// 現在のシーケンス再生インデックス

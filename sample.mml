@@ -1,5 +1,31 @@
-t160 o3 l8 q70 @0 r4 ADSR(1.0, 0.01, 0.05, 0.8, 0.3)
+Track(0)
+t160
+o3 l8 q70 @0 r4 ADSR(1.0, 0.01, 0.05, 0.8, 0.3)
 c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< <
 a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< b->b-< b->b-< b->b-< b->b-<  >
 c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< <
 a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< b->b-< b->b-< b->b-< b->b-<  >
+g-4.a-&a-2 e-1
+l2
+e-d- c1 <b>d- d1 e-d- c2.d-4 <b>d- e-2.d-4
+e-d- c1 <b>d- d1 e-d- c2.d-4 <b>d- e-2.d-4
+e-d- c1 <b>d- d1 e-d- c2.d-4 <b>d- e-2.d-4
+e-d- c1 <b>d- d1 e-d- c2.d-4 <b>d- e-2.d-4
+<b>d-  <e-2.>d-4 <b>d-
+
+Track(1)
+o5 l8 q90 @0 r4 ADSR(1.0, 0.01, 0.05, 0.8, 0.5)
+c<b->ce-2rc<b->ce-4fc<b->Å@c<b->ce-2rc<b->cg4gf4
+c<b->ce-2rc<b->ce-4fc<b->Å@c<b->ce-2rc<b->cg4gf4
+l6 c<b->c l8 e-2c<b->ce-4fc<b->c<b->ce-2rc<b->cg4gf4
+c<b->ce-2rc<b->ce-4fc<b->Å@c<b->ce-2rc<b->cg4g l32<rg-a-b->cd-e-fl8
+e-d-e-g-4f16e-16d-4e-2e-fg-a-
+b-4.b-g-b-g-fe-2r-fg-b->e-4.e-d-e-d-<a-b-2.a-4
+g-4.g-fg-b-fa-e-ca-e-cf4 g-e-<b>g-fd-<b->ff4.e-e-fg-a-
+b-4.b-g-b-g-fe-2r-fg-b->e-4.e-d-e-d-<a-b-2.a-4
+g-4.g-fg-b-fa-e-ca-e-cf4 g-e-<b>g-fd-<b->ff4.e-e-fg-a-
+b-4.b-g-b-g-fe-2r-fg-b->e-4.e-d-e-d-<a-b-2.a-4
+g-4.g-fg-b-fa-e-ca-e-cf4 g-e-<b>g-fd-<b->ff4.e-e-fg-a-
+b-4.b-g-b-g-fe-2r-fg-b->e-4.e-d-e-d-<a-b-2.a-4
+g-4.g-fg-b-fa-e-ca-e-cf4 g-e-<b>g-fd-<b->ff4.e-e-4b-4
+b-g-e-b-a-fd-a-a-4.b-g-4b-4b-g-e-b->d-<a-f>d-

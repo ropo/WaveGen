@@ -43,19 +43,37 @@ void SoundManager::SetOutput( SoundOutputBase *pSoundOutput )
 void SoundManager::Store( void *pBuf, size_t byteSize )
 {
 	size_t blockSize = byteSize/4;
+	if( blockSize == 0 )
+		return;
+
+
 	float *l = new float[blockSize];
 	float *r = new float[blockSize];
-	ZeroMemory( l, blockSize*sizeof(float) );
-	ZeroMemory( r, blockSize*sizeof(float) );
+	float *mixl = new float[blockSize];
+	float *mixr = new float[blockSize];
+	ZeroMemory( mixl, blockSize*sizeof(float) );
+	ZeroMemory( mixr, blockSize*sizeof(float) );
 
 	for( EFFECTSETLISTITR itr=m_effectSet.begin(); itr!=m_effectSet.end(); ++itr ) {
+		ZeroMemory( l, blockSize*sizeof(float) );
+		ZeroMemory( r, blockSize*sizeof(float) );
+
 		itr->pBase->GetWave( l, r, blockSize );
+
+		float *prl = l, *prr = r;
+		float *pwl = mixl, *pwr = mixr;
+		for( size_t i=0; i<blockSize; i++ ) {
+			*(pwl++) += *(prl++);
+			*(pwr++) += *(prr++);
+		}
 	}
+	delete l;
+	delete r;
 
 	float v;
 	short *w = (short*)pBuf;
-	const float *rl = l;
-	const float *rr = r;
+	const float *rl = mixl;
+	const float *rr = mixr;
 	for( ; blockSize; blockSize-- ) {
 		v = MinMax( *rl++, -1.0f, 1.0f );
 		*w++ = (short)( v * 32767.0f * 0.5f );
@@ -63,8 +81,8 @@ void SoundManager::Store( void *pBuf, size_t byteSize )
 		v = MinMax( *rr++, -1.0f, 1.0f );
 		*w++ = (short)( v * 32767.0f * 0.5f );
 	}
-	delete l;
-	delete r;
+	delete mixl;
+	delete mixr;
 }
 
 void SoundManager::Tick()

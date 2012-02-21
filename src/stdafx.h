@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
 #include <fstream>
 
 #define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=NULL;}}

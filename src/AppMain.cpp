@@ -3,7 +3,7 @@
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCommand, int nCmdShow )
 {
 #ifdef _DEBUG
-//	::_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
+	::_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
 //	_CrtSetBreakAlloc( 144 );
 #endif
 
@@ -40,7 +40,7 @@ DWORD AppMain::TickThread()
 		}
 		Sleep( 10 );
 	}
-
+	m_threadIsExit = true;
 	return 0;
 }
 
@@ -131,12 +131,16 @@ void AppMain::Release()
 	m_threadIsExit = true;
 	if( m_threadHandle ) {
 		DWORD dwExitCode;
-		while( GetExitCodeThread( m_threadHandle, &dwExitCode ) == STILL_ACTIVE )
-			Sleep( 100 );
-		DeleteCriticalSection( &m_cs );
+		for(;;) {
+			if( GetExitCodeThread( m_threadHandle, &dwExitCode )==0 || dwExitCode == STILL_ACTIVE ) {
+				Sleep( 100 );
+				continue;
+			}
+			DeleteCriticalSection( &m_cs );
+			break;
+		}
 	}
 	SAFE_DELETE( m_pSoundMan );
 	SAFE_DELETE( m_pSoundOutput );
 	SAFE_DELETE( m_pSeqInputBase );
 }
-
