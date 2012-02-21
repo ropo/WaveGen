@@ -33,9 +33,6 @@ bool SeqInputMML::Init( SoundManager *pManager )
 	ss.pSoundSet->Push( ss.pADSR );									// …をサウンドセットにつっこむ
 	m_pManager->Push( ss.pSoundSet );
 
-	// ADSR パラメータ設定
-	ss.pADSR->ChangeParam( 1.0f, 0.01f, 0.005f, 0.8f, 0.3f );
-
 	m_holder = ss;
 
 	m_playIndex = 0;
@@ -72,12 +69,13 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 		return 0;
 
 	TOKEN token = m_sequence[ index ];
+	SOUNDSET *pSS = &m_holder;
 
 	switch( token.command )
 	{
 		case CMD_NOTE_ON:
 					if( token.param != 0 ) {
-						m_holder.pGen->ChangeFreq( GetFreq( (BYTE)token.param ) );
+						pSS->pGen->ChangeFreq( GetFreq( (BYTE)token.param ) );
 						EffectGen::eTYPE pg;
 						switch( m_curProgram ) {
 							default:
@@ -87,20 +85,27 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 							case 3:	pg = EffectGen::SINEWAVE;	break;
 							case 4:	pg = EffectGen::NOISE;		break;
 						}
-						m_holder.pGen->ChangeType( pg );
-						m_holder.pADSR->NoteOn();
+						pSS->pGen->ChangeType( pg );
+						pSS->pADSR->NoteOn();
 					}else{
-						m_holder.pADSR->NoteOff();
+						pSS->pADSR->NoteOff();
 					}
 				break;
 		case CMD_NOTE_OFF:
-					m_holder.pADSR->NoteOff();
+					pSS->pADSR->NoteOff();
 				break;
 		case CMD_PROGRAM_CHANGE:
 					m_curProgram = (BYTE)token.param;
 				break;
 		case CMD_TEMPO:
 					m_tickParSec = token.param;
+				break;
+		case CMD_ADSR:
+					pSS->pADSR->ChangeParam(  token.paramADSR.aPower
+											, token.paramADSR.aTime
+											, token.paramADSR.dTime
+											, token.paramADSR.sPower
+											, token.paramADSR.rTime );
 				break;
 	}
 
@@ -139,16 +144,16 @@ void SeqInputMML::Play( DWORD dwTime )
 }
 
 // MMLをコンパイルする
-bool SeqInputMML::ComplieMML( const wchar_t *pMML )
+bool SeqInputMML::CompileMML( const wchar_t *pMML )
 {
 	// フェーズ１
-	const wchar_t *pPreComplied = CompliePhase1( pMML );
-	if( pPreComplied == NULL )
+	const wchar_t *pPreCompiled = CompilePhase1( pMML );
+	if( pPreCompiled == NULL )
 		return true;
 
 	// フェーズ２
-	m_sequence = CompliePhase2( pPreComplied );
-	delete pPreComplied;
+	m_sequence = CompilePhase2( pPreCompiled );
+	delete pPreCompiled;
 
 	// フェーズ３以下略
 
@@ -230,12 +235,13 @@ DWORD SeqInputMML::GetTempoToTick( DWORD tempo ) const
 }
 
 // コンパイルフェーズ１：文字整形
-const wchar_t *SeqInputMML::CompliePhase1( const wchar_t *pSource )
+const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource )
 {
 	wchar_t *pBuffer = new wchar_t[ wcslen(pSource) ];
 	wchar_t *w = pBuffer;
 
 	int loopCount = 0;
+	int parenCount = 0;
 	while( *pSource ) {
 		// 空白や改行は詰める
 		if( *pSource == ' ' || *pSource == '\t' || pSource[0]=='\r' || pSource[0]=='\n' ) {
@@ -251,6 +257,15 @@ const wchar_t *SeqInputMML::CompliePhase1( const wchar_t *pSource )
 				goto err;
 			loopCount--;
 		}
+		// 丸かっこ数のチェック
+		if( *pSource == '(' )
+			parenCount++;
+		if( *pSource == ')' ) {
+			// 開始より終了が多い
+			if( parenCount == 0 )
+				goto err;
+			parenCount--;
+		}
 		// 大文字は小文字に
 		if( *pSource>='A' && *pSource<='Z' )
 			*(w++) = *(pSource++) | 0x20;
@@ -259,6 +274,9 @@ const wchar_t *SeqInputMML::CompliePhase1( const wchar_t *pSource )
 	}
 	// ループが閉じられていない
 	if( loopCount != 0 )
+		goto err;
+	// 丸カッコが閉じられていない
+	if( parenCount != 0 )
 		goto err;
 
 	*w = '\0';
@@ -270,8 +288,32 @@ err:
 	return NULL;
 }
 
+// 丸カッコ閉じまでの文字列を取得
+std::vector<std::wstring> SeqInputMML::GetParams( const wchar_t *pSource, const wchar_t **ppExit ) const
+{
+	std::vector<std::wstring> params;
+	const wchar_t *pEnd = pSource;
+	while( *pEnd != ')' ) {
+		if( *pEnd==',' ) {
+			params.push_back( std::wstring( pSource, pEnd ) );
+			pEnd++;
+			pSource = pEnd;
+		}else{
+			pEnd++;
+		}
+	}
+	if( pSource != pEnd ) {
+		params.push_back( std::wstring( pSource, pEnd ) );
+	}
+
+	if( ppExit )
+		*ppExit = pEnd+1;
+
+	return params;
+}
+
 // コンパイルフェーズ２：トークン生成
-std::vector<SeqInputMML::TOKEN> SeqInputMML::CompliePhase2( const wchar_t *pSource )
+std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSource )
 {
 	TOKEN token;
 	std::vector<TOKEN> tokens;
@@ -305,6 +347,20 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompliePhase2( const wchar_t *pSour
 
 	while( *pSource ) {
 		token.gateTick = 0;
+		if( wcsncmp( pSource, L"adsr(", 5 ) == 0 ) {
+			std::vector<std::wstring> params = GetParams( pSource+5, &pSource );
+			if( params.size() != 5 )
+				continue;	// エラーでもいいんだけどもとりあえず
+			token.command = CMD_ADSR;
+			token.gateTick = 0;
+			token.paramADSR.aPower = (float)_wtof( params[0].c_str() );
+			token.paramADSR.aTime = (float)_wtof( params[1].c_str() );
+			token.paramADSR.dTime = (float)_wtof( params[2].c_str() );
+			token.paramADSR.sPower = (float)_wtof( params[3].c_str() );
+			token.paramADSR.rTime = (float)_wtof( params[4].c_str() );
+			tokens.push_back( token );
+		}
+
 		switch( *pSource ) {
 			case 'o':	token.command = CMD_OCTAVE;
 						token.param = currentOctave = GetNumber( pSource+1, &pSource );

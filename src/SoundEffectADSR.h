@@ -1,18 +1,9 @@
 #pragma once
 
-// 単調波形生成
+// ADSRエフェクト
 class SoundEffectADSR : public SoundEffectBase
 {
 public:
-	enum eTYPE{
-		 SQUARE		// 矩形波
-		,TRIANGLE	// 三角波
-		,SAW		// のこぎり波
-		,SINEWAVE	// 正弦波
-		,NOISE		// ノイズ
-		,SILENT		// 無音
-	};
-
 	SoundEffectADSR();
 	virtual ~SoundEffectADSR();
 	void Release();
@@ -31,8 +22,6 @@ private:
 	float EffectMute();
 
 	float(SoundEffectADSR::*m_fncEffect)();
-	float	m_tph;
-	float	m_blockCount;
 
 	DWORD	m_startTime;
 	float	m_aPower, m_sPower;

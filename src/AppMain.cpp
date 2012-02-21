@@ -82,7 +82,7 @@ bool AppMain::Startup()
 	// プレイヤーをセット
 	m_pSeqInputBase = new SeqInputMML();
 	((SeqInputMML*)m_pSeqInputBase)->Init( m_pSoundMan );
-	((SeqInputMML*)m_pSeqInputBase)->ComplieMML( pMML );
+	((SeqInputMML*)m_pSeqInputBase)->CompileMML( pMML );
 	((SeqInputMML*)m_pSeqInputBase)->Play( timeGetTime() );
 
 	ResumeThread( m_threadHandle );

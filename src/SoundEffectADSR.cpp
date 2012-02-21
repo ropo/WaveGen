@@ -1,28 +1,34 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 
 SoundEffectADSR::SoundEffectADSR()
 	: m_fncEffect( &SoundEffectADSR::EffectMute )
 {
-	ChangeParam( 0, 0, 0, 1, 0 );
+	Reset();
 }
 
 SoundEffectADSR::~SoundEffectADSR()
 {
 }
+
 void SoundEffectADSR::ChangeParam( float aPower, float aTime, float dTime, float sPower, float rTime )
 {
-	m_aPower = aPower;
-	m_sPower = sPower;
-	m_aTime = (DWORD)(BASE_FREQ * aTime);
-	m_dTime = (DWORD)(BASE_FREQ * dTime);
-	m_rTime = (DWORD)(BASE_FREQ * rTime);
+	m_aPower = Max( aPower, 0.0f );
+	m_sPower = Max( sPower, 0.0f );
+	m_aTime = Max( (DWORD)(BASE_FREQ * aTime), 0ul );
+	m_dTime = Max( (DWORD)(BASE_FREQ * dTime), 0ul );
+	m_rTime = Max( (DWORD)(BASE_FREQ * rTime), 0ul );
 }
+
 void SoundEffectADSR::Release()
 {
+	Reset();
 }
+
 void SoundEffectADSR::Reset()
 {
-	
+	// デフォルトはエフェクトなしと同じ設定
+	ChangeParam( 0, 0, 0, 1, 0 );
+	m_fncEffect = &SoundEffectADSR::EffectMute;
 }
 
 void SoundEffectADSR::NoteOn()
@@ -48,7 +54,7 @@ void SoundEffectADSR::Effect( float *pBuffer, size_t bloackSize )
 float SoundEffectADSR::EffectAttack()
 {
 	if( m_startTime >= m_aTime ) {
-		m_startTime -= m_rTime;
+		m_startTime -= m_aTime;
 		m_fncEffect = &SoundEffectADSR::EffectDecay;
 		return EffectDecay();
 	}
@@ -58,7 +64,7 @@ float SoundEffectADSR::EffectAttack()
 
 float SoundEffectADSR::EffectDecay()
 {
-	if( m_startTime >= m_aTime ) {
+	if( m_startTime >= m_dTime ) {
 		m_fncEffect = &SoundEffectADSR::EffectSustain;
 		return EffectSustain();
 	}

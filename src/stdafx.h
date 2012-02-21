@@ -10,6 +10,7 @@
 #pragma comment ( lib, "dsound.lib" )
 
 #include <vector>
+#include <string>
 #include <fstream>
 
 #define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=NULL;}}
@@ -31,8 +32,16 @@
 #include "SeqInputMML.h"
 #include "AppMain.h"
 
-template<typename T> inline float MinMax( T v, T min, T max ) {
+template<typename T> inline T MinMax( T v, T min, T max ) {
 	if( v > max )	return max;
 	if( v < min )	return min;
+	return v;
+}
+template<typename T> inline T Min( T v, T min ) {
+	if( v > min )	return min;
+	return v;
+}
+template<typename T> inline T Max( T v, T max ) {
+	if( v < max )	return max;
 	return v;
 }

@@ -110,6 +110,11 @@
     <ClInclude Include="src\targetver.h" />
     <ClInclude Include="src\WinBase.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="sample.mml">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </None>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -119,4 +119,7 @@
       <Filter>ヘッダー ファイル\Effect</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="sample.mml" />
+  </ItemGroup>
 </Project>

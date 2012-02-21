@@ -1,4 +1,4 @@
-t160 o3 l8 q70 @0 r4
+t160 o3 l8 q70 @0 r4 ADSR(1.0, 0.01, 0.05, 0.8, 0.3)
 c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< <
 a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< b->b-< b->b-< b->b-< b->b-<  >
 c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< <
