@@ -76,10 +76,10 @@ void SoundManager::Store( void *pBuf, size_t byteSize )
 	const float *rr = mixr;
 	for( ; blockSize; blockSize-- ) {
 		v = MinMax( *rl++, -1.0f, 1.0f );
-		*w++ = (short)( v * 32767.0f * 0.5f );
+		*w++ = (short)( v * 32767.0f );
 
 		v = MinMax( *rr++, -1.0f, 1.0f );
-		*w++ = (short)( v * 32767.0f * 0.5f );
+		*w++ = (short)( v * 32767.0f );
 	}
 	delete mixl;
 	delete mixr;

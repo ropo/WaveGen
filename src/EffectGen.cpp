@@ -63,7 +63,7 @@ void EffectGen::Effect( float *pBuffer, size_t bloackSize )
 // 矩形波
 float EffectGen::EffectSquare( bool )
 {
-	return ( ( m_tph/2 < m_blockCount ) ? 1.0f : -1.0f ) * 0.8f;	// TODO: 矩形波は音が大きいので落としとく
+	return ( ( m_tph/2 < m_blockCount ) ? 1.0f : -1.0f );
 }
 
 // 三角波

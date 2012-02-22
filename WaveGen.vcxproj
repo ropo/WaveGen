@@ -78,11 +78,11 @@
     <ClCompile Include="src\EffectGen.cpp" />
     <ClCompile Include="src\AppMain.cpp" />
     <ClCompile Include="src\SeqInputBase.cpp" />
-    <ClCompile Include="src\SeqInputConst.cpp" />
     <ClCompile Include="src\SeqInputMML.cpp" />
     <ClCompile Include="src\SoundEffectADSR.cpp" />
     <ClCompile Include="src\SoundEffectBase.cpp" />
     <ClCompile Include="src\SoundEffectSet.cpp" />
+    <ClCompile Include="src\SoundEffectVolume.cpp" />
     <ClCompile Include="src\SoundManager.cpp" />
     <ClCompile Include="src\SoundOutputDS.cpp" />
     <ClCompile Include="src\SoundOutputBase.cpp" />
@@ -97,11 +97,11 @@
     <ClInclude Include="src\AppMain.h" />
     <ClInclude Include="src\EffectGen.h" />
     <ClInclude Include="src\SeqInputBase.h" />
-    <ClInclude Include="src\SeqInputConst.h" />
     <ClInclude Include="src\SeqInputMML.h" />
     <ClInclude Include="src\SoundEffectADSR.h" />
     <ClInclude Include="src\SoundEffectBase.h" />
     <ClInclude Include="src\SoundEffectSet.h" />
+    <ClInclude Include="src\SoundEffectVolume.h" />
     <ClInclude Include="src\SoundManager.h" />
     <ClInclude Include="src\SoundOutputDS.h" />
     <ClInclude Include="src\SoundOutputBase.h" />
@@ -113,6 +113,7 @@
   <ItemGroup>
     <None Include="sample.mml">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

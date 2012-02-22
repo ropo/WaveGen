@@ -29,7 +29,7 @@
 #include "SoundEffectBase.h"
 #include "EffectGen.h"
 #include "SoundEffectADSR.h"
-#include "SeqInputConst.h"
+#include "SoundEffectVolume.h"
 #include "SeqInputMML.h"
 #include "AppMain.h"
 

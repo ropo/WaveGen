@@ -1,6 +1,6 @@
-#pragma once
+ï»¿#pragma once
 
-#define MAX_TRACK	3
+#define MAX_TRACK	16
 
 class SeqInputMML : public SeqInputBase
 {
@@ -24,17 +24,17 @@ private:
 		SoundEffectSet	*pSoundSet;
 		EffectGen		*pGen;
 		SoundEffectADSR	*pADSR;
+		SoundEffectVolume *pVolume;
 	}SOUNDSET;
 
 	enum eCMD {
 		 CMD_TEMPO
 		,CMD_END
-		,CMD_OCTAVE
 		,CMD_NOTE_ON
 		,CMD_NOTE_OFF
-		,CMD_BASELENGTH
 		,CMD_PROGRAM_CHANGE
 		,CMD_ADSR
+		,CMD_VOLUME
 	};
 	typedef struct tagADSRPARAM{
 		float aPower;
@@ -50,6 +50,7 @@ private:
 		ADSRPARAM	paramADSR;
 		DWORD		gateTick;
 		DWORD		startTick;
+		DWORD		index;
 	}TOKEN;
 
 	const wchar_t *CompilePhase1( const wchar_t *pSource );
@@ -65,12 +66,10 @@ private:
 
 	SOUNDSET				m_holder[MAX_TRACK];
 	SoundManager			*m_pManager;
-	std::vector<TOKEN>		m_sequence;			// ƒV[ƒPƒ“ƒXƒf[ƒ^
-	DWORD					m_playIndex;		// Œ»İ‚ÌƒV[ƒPƒ“ƒXÄ¶ƒCƒ“ƒfƒbƒNƒX
-	DWORD					m_totalTick;		// Ä¶ŠJn‚©‚çŒ»İ‚Ü‚Å‚ÌTick’l
-	DWORD					m_nextTick;			// Ÿ‚ÌSequence‚ğÀs‚·‚éTick
-	DWORD					m_tickParSec;		// ‚P•bŠÔ‚ÌTick’l
-	DWORD					m_startTime;		// Ä¶ŠJnŠÔ(ms)
-
-	BYTE					m_curProgram;		// Œ»İ‚Ì‰¹F
+	std::vector<TOKEN>		m_sequence;			// ã‚·ãƒ¼ã‚±ãƒ³ã‚¹ãƒ‡ãƒ¼ã‚¿
+	DWORD					m_playIndex;		// ç¾åœ¨ã®ã‚·ãƒ¼ã‚±ãƒ³ã‚¹å†ç”Ÿã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹
+	DWORD					m_totalTick;		// å†ç”Ÿé–‹å§‹ã‹ã‚‰ç¾åœ¨ã¾ã§ã®Tickå€¤
+	DWORD					m_nextTick;			// æ¬¡ã®Sequenceã‚’å®Ÿè¡Œã™ã‚‹Tick
+	DWORD					m_tickParSec;		// ï¼‘ç§’é–“ã®Tickå€¤
+	DWORD					m_startTime;		// å†ç”Ÿé–‹å§‹æ™‚é–“(ms)
 };

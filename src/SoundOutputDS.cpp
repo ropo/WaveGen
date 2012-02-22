@@ -85,14 +85,14 @@ void SoundOutputDS::Write( const void *pWaveData, size_t blockSize )
 	LPVOID lpvWrite1, lpvWrite2;
 	DWORD dwLength1, dwLength2;
 	DWORD writeSize = GetBlockSize();
-	if( writeSize < blockSize )
+	if( writeSize > blockSize )
 		writeSize = blockSize;
 	if( writeSize == 0 )
 		return;
 
 	if( DS_OK == m_pDSB->Lock( m_writePos, writeSize*4, &lpvWrite1, &dwLength1, &lpvWrite2, &dwLength2, 0 ) ) {
 		memcpy( lpvWrite1, pWaveData, dwLength1 );
-		memcpy( lpvWrite2, (char*)pWaveData + dwLength1, dwLength2 );
+		memcpy( lpvWrite2, ((char*)pWaveData) + dwLength1, dwLength2 );
 		m_pDSB->Unlock( lpvWrite1, dwLength1, lpvWrite2, dwLength2 );
 		m_writePos += dwLength1 + dwLength2;
 
