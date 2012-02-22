@@ -49,8 +49,6 @@ private:
 		DWORD		param;
 		ADSRPARAM	paramADSR;
 		DWORD		gateTick;
-		DWORD		startTick;
-		DWORD		index;
 	}TOKEN;
 
 	const wchar_t *CompilePhase1( const wchar_t *pSource );

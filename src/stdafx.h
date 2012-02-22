@@ -10,6 +10,7 @@
 #pragma comment ( lib, "dsound.lib" )
 
 #include <vector>
+#include <stack>
 #include <string>
 #include <algorithm>
 #include <fstream>

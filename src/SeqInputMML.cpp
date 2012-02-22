@@ -253,6 +253,7 @@ const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource )
 	bool isBlockComment = false;;
 	int loopCount = 0;
 	int parenCount = 0;
+
 	while( *pSource ) {
 		// 改行？
 		if( pSource[0]=='\r' || pSource[0]=='\n' ) {
@@ -266,22 +267,24 @@ const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource )
 			continue;
 		}
 
-		// ブロックコメント終了？
-		if( isLineComment==false && wcsncmp( pSource, L"*/", 2 ) == 0 ) {
-			pSource += 2;
-			if( isBlockComment )	isBlockComment = false;
-			else					goto err;	// 始まる前に終わっていた
-			continue;
+		// ラインコメント中でなければ
+		if( isLineComment==false ) {
+			// ブロックコメント終了？
+			if(  wcsncmp( pSource, L"*/", 2 ) == 0 ) {
+				pSource += 2;
+				if( isBlockComment )	isBlockComment = false;
+				else					goto err;	// 始まる前に終わっていた
+				continue;
+			}
+			// ブロックコメント開始？
+			if( wcsncmp( pSource, L"/*", 2 ) == 0 ) {
+				pSource += 2;
+				isBlockComment = true;
+				continue;
+			}
 		}
 
-		// ブロックコメント開始？
-		if( isLineComment==false && wcsncmp( pSource, L"/*", 2 ) == 0 ) {
-			pSource += 2;
-			isBlockComment = true;
-			continue;
-		}
-
-		// コメント中なら何もしない
+		// 以下コメント中なら何もしない
 		if( isBlockComment || isLineComment ) {
 			pSource++;
 			continue;
@@ -365,8 +368,31 @@ std::vector<std::wstring> SeqInputMML::GetParams( const wchar_t *pSource, const 
 // コンパイルフェーズ２：トークン生成
 std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSource )
 {
-	TOKEN token;
-	std::vector<TOKEN> tokens[MAX_TRACK], resultTokens, *pTokens;
+	// コンパイル中に必要なワーク構造体
+	typedef struct tagTOKENWORK : TOKEN {
+		DWORD		startTick;
+		DWORD		index;
+	}TOKENWORK;
+
+	// ループブロック情報
+	typedef struct tagLOOPINFO {
+		const wchar_t *pStart;
+		const wchar_t *pEscape;
+		const wchar_t *pEnd;
+		DWORD loopCount;
+	}LOOPINFO;
+	std::stack<LOOPINFO> loopStack;
+
+	// トラック情報
+	typedef struct tagTRACKWORK {
+		std::vector<TOKENWORK> tokens;
+	}TRACKWORK;
+
+	TOKENWORK token;
+	std::vector<TOKENWORK> resultTokens, *pTokens;
+	std::vector<TOKEN> result;
+	TRACKWORK trackWork[MAX_TRACK];
+	char	onceOctave = 0;
 
 	// 省略可能な値をすべて設定しておく
 	int		currentOctave = 5;
@@ -379,11 +405,11 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 		token.command = CMD_PROGRAM_CHANGE;
 		token.param = 0;
 		token.gateTick = 0;
-		tokens[i].push_back( token );
+		trackWork[i].tokens.push_back( token );
 	}
 
 	// テンポは
-	pTokens = &tokens[ currentTrack ];
+	pTokens = &trackWork[ currentTrack ].tokens;
 	token.command = CMD_TEMPO;
 	token.param = GetTempoToTick( 128 );
 	token.gateTick = 0;
@@ -392,10 +418,11 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 	while( *pSource ) {
 		token.gateTick = 0;
 
+		// ADSRエフェクト指定？
 		if( wcsncmp( pSource, L"adsr(", 5 ) == 0 ) {
 			std::vector<std::wstring> params = GetParams( pSource+5, &pSource );
 			if( params.size() != 5 )
-				continue;	// エラーでもいいんだけどもとりあえず
+				goto err;	// 引数の数が不正
 			token.command = CMD_ADSR;
 			token.gateTick = 0;
 			token.paramADSR.aPower = (float)_wtof( params[0].c_str() );
@@ -406,37 +433,40 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 			pTokens->push_back( token );
 		}
 
+		// トラックチェンジ？
 		if( wcsncmp( pSource, L"track(", 6 ) == 0 ) {
+			if( !loopStack.empty() )
+				goto err;	// ループが完結してない
 			std::vector<std::wstring> params = GetParams( pSource+6, &pSource );
 			if( params.size() != 1 )
-				continue;	// エラーでもいいんだけどもとりあえず
+				goto err;	// 引数の数が不正
 			currentTrack = _wtoi( params[0].c_str() ) % MAX_TRACK;
-			pTokens = &tokens[currentTrack];
+			pTokens = &trackWork[ currentTrack ].tokens;
 		}
 
 		switch( *pSource ) {
 			case 'o':	currentOctave = GetNumber( pSource+1, &pSource );
 						if( currentOctave == 0 )
-							goto err;
+							goto err;	// 引数がない
 					break;
 			case 'l':	defaultTick = GetNoteTick( pSource+1, defaultTick, &pSource );
 						if( defaultTick == 0 )
-							goto err;
+							goto err;	// 引数がない
 					break;
 			case 't':	token.command = CMD_TEMPO;
 						token.param = GetTempoToTick( GetNumber( pSource+1, &pSource ) );
 						if( token.param == 0 )
-							goto err;
+							goto err;	// 引数がない
 						pTokens->push_back( token );
 					break;
 			case '<':	currentOctave--;
 						if( currentOctave < 0 )
-							goto err;
+							currentOctave = 0;
 						pSource++;
 					break;
 			case '>':	currentOctave++;
 						if( currentOctave > 9 )
-							goto err;
+							currentOctave = 9;
 						pSource++;
 					break;
 			case 'q':	noteOnGate = GetNumber( pSource+1, &pSource );
@@ -456,12 +486,11 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 						char note;
 						DWORD gateTime;
 						if( GetNote( pSource, defaultTick, &note, &gateTime, &pSource ) )
-							goto err;
+							goto err;		// 来ることないけども一応不正エラー
 
 						if( note >= 0 ) {
-							note += (char)(currentOctave * 12);
 							token.command = CMD_NOTE_ON;
-							token.param = note;
+							token.param = MinMax( (onceOctave + currentOctave) * 12 + note, 0, 127 );
 							token.gateTick = gateTime * noteOnGate / 100;
 							pTokens->push_back( token );
 
@@ -476,15 +505,63 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 							pTokens->push_back( token );
 						}
 					}break;
+			case '`':	onceOctave = 1;
+						pSource++;
+					continue;
+			case '"':	onceOctave = -1;
+						pSource++;
+					continue;
+			case '[':{	LOOPINFO loopInfo;
+						loopInfo.loopCount = GetNumber( pSource+1, &pSource );
+						if( loopInfo.loopCount < 2 )
+							loopInfo.loopCount = 2;	// 最低でも２周する
+						loopInfo.pStart = pSource;
+						loopInfo.pEscape = NULL;
+						loopInfo.pEnd = NULL;
+						loopStack.push( loopInfo );
+					}break;
+			case ':':{	if( loopStack.empty() )
+							goto err;	// ループブロックじゃないのにエスケープ記号がある
+						LOOPINFO loopInfo = loopStack.top();
+						if( loopInfo.loopCount == 1 ) {
+							loopStack.pop();
+							pSource = loopInfo.pEnd;
+						}else{
+							pSource++;
+							if( loopInfo.pEscape == NULL ) {
+								loopStack.pop();
+								loopInfo.pEscape = pSource;
+								loopStack.push( loopInfo );
+							}else if( loopInfo.pEscape != pSource )
+								goto err;	// １つのループブロック中に : が複数あった
+						}
+					}break;
+			case ']':{	if( loopStack.empty() )
+							goto err;	// ループブロックじゃないのに、ループ終端がある
+						LOOPINFO loopInfo = loopStack.top();
+						loopStack.pop();
+						loopInfo.loopCount--;
+						if( loopInfo.loopCount == 0 ) {
+							// ループ終了
+							pSource++;
+						}else{
+							loopInfo.pEnd = pSource+1;
+							pSource = loopInfo.pStart;
+							loopStack.push( loopInfo );
+						}
+					}break;
 			default:	pSource++;
 		}
+		onceOctave = 0;
 	}
+	if( !loopStack.empty() )
+		goto err;	// ループが完結していない
 
-	// tickSum & merge
+	// トラックごとに配置インデックスと再生開始時間(Tick)を書き込み１本のトラック情報にマージ
 	DWORD tokenIndex = 0;
 	for( BYTE i=0; i<MAX_TRACK; i++ ) {
 		DWORD dwTotalTime = 0;
-		for( std::vector<TOKEN>::iterator itr=tokens[i].begin(); itr!=tokens[i].end(); ++itr ) {
+		for( std::vector<tagTOKENWORK>::iterator itr=trackWork[i].tokens.begin(); itr!=trackWork[i].tokens.end(); ++itr ) {
 			itr->startTick = dwTotalTime;
 			itr->track = i;
 			itr->index = tokenIndex++;
@@ -493,29 +570,31 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 		}
 	}
 
-	// sort
-	class LessToken {
-	public:
-		bool operator()(const TOKEN& riLeft, const TOKEN& riRight) const {
-			if( riLeft.startTick == riRight.startTick )
+	// マージされたトラックから再生開始時間でソート
+	struct LessToken {
+		bool operator()(const tagTOKENWORK& riLeft, const tagTOKENWORK& riRight) const {
+			if( riLeft.startTick == riRight.startTick )	// 同じ再生時間なら速く定義された方
 				return riLeft.index < riRight.index;
 			return riLeft.startTick < riRight.startTick;
 		}
 	};
 	std::sort( resultTokens.begin(), resultTokens.end(), LessToken() );
 
-	// tickBet
+	// 前後の再生コマンド間の時間を再計算し、不要なワークを取り除いた配列に入れなおす
 	size_t count = resultTokens.size()-1;
 	for( size_t i=0; i<count; i++ ) {
 		resultTokens[i].gateTick = resultTokens[i+1].startTick - resultTokens[i].startTick;
+		result.push_back( resultTokens[i] );
 	}
 
+	// 最後に終端マーカを入れる
 	token.command = CMD_END;
 	token.gateTick = 0;
 	resultTokens.push_back( token );
-	return resultTokens;
+
+	return result;
 
 err:
-	tokens[0].clear();
-	return tokens[0];
+	result.clear();
+	return result;
 }

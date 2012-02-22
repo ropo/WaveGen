@@ -5,37 +5,27 @@ t160
 //---------------------------------------------------------------------
 Track(0)
 o3 l8 q70 @1 v120 r2 ADSR(1.0, 0.01, 0.05, 0.8, 0.3)
-c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< <
-a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< b->b-< b->b-< b->b-< b->b-<  >
-c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< c>c< <
-a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< a->a-< b->b-< b->b-< b->b-< b->b-<  >
-g-4.a-&a-2 e-1
-l2
-e-d- c1 <b>d- d1 e-d- c2.d-4 <b>d- e-2.d-4
-e-d- c1 <b>d- d1 e-d- c2.d-4 <b>d- e-2.d-4
-e-d- c1 <b>d- d1 e-d- c2.d-4 <b>d- e-2.d-4
-e-d- c1 <b>d- d1 e-d- c2.d-4 <b>d- e-2.d-4
-<b>d-  <e-2.>d-4 <b>d-
+[ [16 c`c] < [12 a-`a-] [4 b-`b-] > ]
+g-4.a-2r e-1
+[4 l2
+ e-d- c1       "bd- d1
+ e-d- c2.d-4   "bd- e-2.d-4
+]
+"bd-  "e-2.d-4 "bd-
 
 //---------------------------------------------------------------------
 // メロ
 //---------------------------------------------------------------------
 Track(1)
 o5 l8 q90 @0 v50 r2 ADSR(1.0, 0.05, 0.05, 0.8, 0.5)
-c<b->ce-2rc<b->ce-4fc<b->　c<b->ce-2rc<b->cg4gf4
-c<b->ce-2rc<b->ce-4fc<b->　c<b->ce-2rc<b->cg4gf4
-l6 c<b->c l8 e-2c<b->ce-4fc<b->c<b->ce-2rc<b->cg4gf4
-c<b->ce-2rc<b->ce-4fc<b->　c<b->ce-2rc<b->cg4g l32<rg-a-b->cd-e-fl8
+[ c"b-ce-2rc"b-ce-4fc"b-　c"b-ce-2rc"b-cg4gf4 ]
+l6 c"b-c l8 e-2c"b-ce-4fc"b-c"b-ce-2rc"b-cg4gf4
+c"b-ce-2rc"b-ce-4fc"b-　c"b-ce-2rc"b-cg4g l32<rg-a-b->cd-e-fl8
+
 e-d-e-g-4f16e-16d-4e-2e-fg-a-
-b-4.b-g-b-g-fe-2r-fg-b->e-4.e-d-e-d-<a-b-2.a-4
-g-4.g-fg-b-fa-e-ca-e-cf4 g-e-<b>g-fd-<b->ff4.e-e-fg-a-
-b-4.b-g-b-g-fe-2r-fg-b->e-4.e-d-e-d-<a-b-2.a-4
-g-4.g-fg-b-fa-e-ca-e-cf4 g-e-<b>g-fd-<b->ff4.e-e-fg-a-
-b-4.b-g-b-g-fe-2r-fg-b->e-4.e-d-e-d-<a-b-2.a-4
-g-4.g-fg-b-fa-e-ca-e-cf4 g-e-<b>g-fd-<b->ff4.e-e-fg-a-
-b-4.b-g-b-g-fe-2r-fg-b->e-4.e-d-e-d-<a-b-2.a-4
-g-4.g-fg-b-fa-e-ca-e-cf4 g-e-<b>g-fd-<b->ff4.e-e-4b-4
-b-g-e-b-a-fd-a-a-4.b-g-4b-4b-g-e-b->d-<a-f>d-
+[4 b-4.b-g-b-g-fe-2r-fg-b->e-4.e-d-e-d-<a-b-2.a-4
+   g-4.g-fg-b-fa-e-ca-e-cf4 g-e-"bg-fd-"b-ff4.e-: e-fg-a- ] e-4b-4
+b-g-e-b-a-fd-a-a-4.b-g-4b-4b-g-e-b-`d-a-f>d-
 
 r1
 
@@ -44,51 +34,29 @@ r1
 //---------------------------------------------------------------------
 Track(2)
 o6 l16 q50 @3 v30 r2 ADSR(0, 0, 0, 1, 0.5)
-e->ce-dc<e-a-g>e-<e->c<b->ce-<g>e-< e->ce-dc<e-a-gfe-de-e->e-<e->d< e->ce-dc<e-a-g>e-<e->c<b->ce-<g>e-< e->gfe-d<b-ge-e->ce-d<g>e-gf<
-e->ce-dc<e-a-g>e-<e->c<b->ce-<g>e-< e->ce-dc<e-a-gfe-de-e->e-<e->d< e->ce-dc<e-a-g>e-<e->c<b->ce-<g>e-< e->gfe-d<b-ge-e->ce-d<g>e-gf<
-e->ce-dc<e-a-g>e-<e->c<b->ce-<g>e-< e->ce-dc<e-a-gfe-de-e->e-<e->d< e->ce-dc<e-a-g>e-<e->c<b->ce-<g>e-< e->gfe-d<b-ge-e->ce-d<g>e-gf<
-e->ce-dc<e-a-g>e-<e->c<b->ce-<g>e-< e->ce-dc<e-a-gfe-de-e->e-<e->d< e->ce-dc<e-a-g>e-<e->c<b->ce-<g>e-< e->gfe-d<b-ge-e->ce-d<g>e-gf<
+[
+ [
+  [ e->ce-dc<e-a-g>e-"e-c"b-ce-"ge-<
+  : e->ce-dc<e-a-gfe-de-e->e-"e-d<
+  ]
+  e->gfe-d<b-ge-e->ce-d"ge-gf<
+ ]
+ >
+]
 
-//---------------------------------------------------------------------
-// メロサポ
-//---------------------------------------------------------------------
+// ↑と同じトラックで メロサポ
 o5 l16 @1 v50 q80 ADSR(0, 0, 0, 1, 0.5)
 
 r1
 e-g-b-re-g-b-r d-fa-rd-fa-r l8
 
-e-b-a16g-16b-d-b-g-a16b-16
-ce-a-16>c8.e-16c8.<ge-
-<b>g-f16e-16g-d-fd-g16a-16
-db-fb-db-fa-16b-16
-e-b-g->e-e-e-c<g-
-ce-g->ce-c<f>c<
-<b>g-e-g-d-a-fa-
-e-b-g->e-<b->e-<b->e-<
-
-e-b-a16g-16b-d-b-g-a16b-16
-ce-a-16>c8.e-16c8.<ge-
-<b>g-f16e-16g-d-fd-g16a-16
-db-fb-db-fa-16b-16
-e-b-g->e-e-e-c<g-
-ce-g->ce-c<f>c<
-<b>g-e-g-d-a-fa-
-e-b-g->e-<b->e-<b->e-<
-
-e-b-a16g-16b-d-b-g-a16b-16
-ce-a-16>c8.e-16c8.<ge-
-<b>g-f16e-16g-d-fd-g16a-16
-db-fb-db-fa-16b-16
-e-b-g->e-e-e-c<g-
-ce-g->ce-c<f>c<
-<b>g-e-g-d-a-fa-
-e-b-g->e-<b->e-<b->e-<
-
-e-b-a16g-16b-d-b-g-a16b-16
-ce-a-16>c8.e-16c8.<ge-
-<b>g-f16e-16g-d-fd-g16a-16
-db-fb-db-fa-16b-16
-e-b-g->e-e-e-c<g-
-ce-g->ce-c<f>c<
-<b>g-e-g-d-a-fa-
-e-b-g->e-<b->e-<b->e-<
+[4
+	e-b-a16g-16b-d-b-g-a16b-16
+	ce-a-16>c8.e-16c8.<ge-
+	"bg-f16e-16g-d-fd-g16a-16
+	db-fb-db-fa-16b-16
+	e-b-g->e-e-e-c<g-
+	ce-g->ce-c"fc<
+	"bg-e-g-d-a-fa-
+	e-b-g->e-"b-e-"b-e-<
+]
