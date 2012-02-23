@@ -24,6 +24,7 @@ private:
 	float(SoundEffectADSR::*m_fncEffect)();
 
 	DWORD	m_startTime;
+	float	m_currentPower;
 	float	m_aPower, m_sPower;
 	DWORD	m_aTime, m_dTime, m_rTime;
 };

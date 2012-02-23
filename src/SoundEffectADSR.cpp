@@ -34,13 +34,16 @@ void SoundEffectADSR::Reset()
 void SoundEffectADSR::NoteOn()
 {
 	m_startTime = 0;
+	m_currentPower = 0;
 	m_fncEffect = &SoundEffectADSR::EffectAttack;
 }
 
 void SoundEffectADSR::NoteOff()
 {
 	m_startTime = 0;
-	m_fncEffect = &SoundEffectADSR::EffectRelease;
+	// すでに停止や減衰に入っていなければリリースする
+	if( m_fncEffect != &SoundEffectADSR::EffectMute && m_fncEffect != &SoundEffectADSR::EffectRelease )
+		m_fncEffect = &SoundEffectADSR::EffectRelease;
 }
 
 void SoundEffectADSR::Effect( float *pBuffer, size_t bloackSize )
@@ -56,6 +59,7 @@ float SoundEffectADSR::EffectAttack()
 	if( m_startTime >= m_aTime ) {
 		m_startTime -= m_aTime;
 		m_fncEffect = &SoundEffectADSR::EffectDecay;
+		m_currentPower = m_aPower;
 		return EffectDecay();
 	}
 
@@ -66,6 +70,7 @@ float SoundEffectADSR::EffectDecay()
 {
 	if( m_startTime >= m_dTime ) {
 		m_fncEffect = &SoundEffectADSR::EffectSustain;
+		m_currentPower = m_sPower;
 		return EffectSustain();
 	}
 
@@ -82,10 +87,11 @@ float SoundEffectADSR::EffectRelease()
 	if( m_startTime >= m_rTime ) {
 		m_startTime -= m_rTime;
 		m_fncEffect = &SoundEffectADSR::EffectMute;
+		m_currentPower = 0;
 		return EffectMute();
 	}
 
-	return (1.0f-CalcLiner( 0, (float)m_rTime, (float)m_startTime )) * m_sPower;
+	return (1.0f-CalcLiner( 0, (float)m_rTime, (float)m_startTime )) * m_currentPower;
 }
 
 float SoundEffectADSR::EffectMute()

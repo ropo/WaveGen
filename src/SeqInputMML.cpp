@@ -81,11 +81,9 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 	switch( token.command )
 	{
 		case CMD_NOTE_ON:
-					if( token.param != 0 ) {
+					if( token.param <= 127 ) {
 						pSS->pGen->ChangeFreq( GetFreq( (BYTE)token.param ) );
 						pSS->pADSR->NoteOn();
-					}else{
-						pSS->pADSR->NoteOff();
 					}
 				break;
 		case CMD_NOTE_OFF:
@@ -164,7 +162,8 @@ bool SeqInputMML::CompileMML( const wchar_t *pMML )
 	m_sequence = CompilePhase2( pPreCompiled );
 	delete pPreCompiled;
 
-	// フェーズ３以下略
+	// フェーズ３
+	m_sequence = CompilePhase3( m_sequence );
 
 
 	return false;
@@ -195,9 +194,13 @@ bool SeqInputMML::GetNote( const wchar_t *pString, DWORD defaultTick, char *pNot
 		if( *pString == '+' ) {
 			note++;
 			pString++;
+			if( note == 12 )
+				note = 0;
 		} else if( *pString == '-' ) {
 			note--;
 			pString++;
+			if( note == -1 )
+				note = 11;
 		}
 		if( note < 0 || note > 11 )
 			return true;
@@ -244,7 +247,7 @@ DWORD SeqInputMML::GetTempoToTick( DWORD tempo ) const
 }
 
 // コンパイルフェーズ１：文字整形
-const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource )
+const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource ) const
 {
 	wchar_t *pBuffer = new wchar_t[ wcslen(pSource) ];
 	wchar_t *w = pBuffer;
@@ -366,7 +369,7 @@ std::vector<std::wstring> SeqInputMML::GetParams( const wchar_t *pSource, const 
 }
 
 // コンパイルフェーズ２：トークン生成
-std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSource )
+std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSource ) const
 {
 	// コンパイル中に必要なワーク構造体
 	typedef struct tagTOKENWORK : TOKEN {
@@ -499,8 +502,8 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 							token.gateTick = gateTime - token.gateTick;
 							pTokens->push_back( token );
 						}else{
-							token.command = CMD_NOTE_ON;
-							token.param = 0;
+							token.command = CMD_NOTE_OFF;
+							token.param = 1000;
 							token.gateTick = gateTime;
 							pTokens->push_back( token );
 						}
@@ -598,3 +601,35 @@ err:
 	result.clear();
 	return result;
 }
+
+// コンパイルフェーズ３：最適化
+std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase3( std::vector<TOKEN> tokens ) const
+{
+	{
+		TOKEN dummyToken;
+		dummyToken.command = (eCMD)-1;
+		tokens.push_back( dummyToken );
+	}
+
+	std::vector<TOKEN> result;
+	TOKEN *pToken = &tokens[0], *pPrevToken = NULL;
+	for( size_t i=tokens.size(); i>0; i--, pToken++ ) {
+		if( pPrevToken ) {
+			// 前後が同じトラックで休符ならゲート時間を混ぜる
+			if( pPrevToken->track == pToken->track
+			 && pToken->command == CMD_NOTE_OFF
+			 && pPrevToken->command == CMD_NOTE_OFF )
+			{
+				pPrevToken->gateTick += pToken->gateTick;
+			}else{
+				result.push_back( *pPrevToken );
+				pPrevToken = pToken;
+			}
+		}else{
+			pPrevToken = pToken;
+		}
+	}
+
+	return result;
+}
+

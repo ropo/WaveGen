@@ -66,9 +66,7 @@ bool AppMain::Startup()
 	//
 	std::wifstream ifs( L"sample.mml", std::ios::binary );
 	if( ifs.fail() ) {
-		ifs.open( L"../sample.mml", std::ios::binary );
-		if( ifs.fail() )
-			return true;
+		return true;
 	}
 
 	size_t fileSize = (size_t)ifs.seekg( 0, std::ios::end ).tellg();

@@ -6,5 +6,3 @@ ipch/*
 *.suo
 *.vcxproj.user
 *.opensdf
-
-!Release/WaveGen.exe

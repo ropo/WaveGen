@@ -77,7 +77,7 @@ float EffectGen::EffectTriangle( bool )
 // のこぎり波
 float EffectGen::EffectSaw( bool )
 {
-	return -1.0f + CalcLiner( 0, m_tph, m_blockCount ) * 2.0f;
+	return 1.0f - CalcLiner( 0, m_tph, m_blockCount ) * 2.0f;
 }
 
 // 正弦波

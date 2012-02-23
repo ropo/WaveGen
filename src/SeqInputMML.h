@@ -51,8 +51,9 @@ private:
 		DWORD		gateTick;
 	}TOKEN;
 
-	const wchar_t *CompilePhase1( const wchar_t *pSource );
-	std::vector<TOKEN> CompilePhase2( const wchar_t *pSource );
+	const wchar_t *CompilePhase1( const wchar_t *pSource ) const;
+	std::vector<TOKEN> CompilePhase2( const wchar_t *pSource ) const;
+	std::vector<TOKEN> CompilePhase3( std::vector<TOKEN> tokens ) const;
 	DWORD GetNoteTick( const wchar_t *pNoteSize, DWORD defaultTick, const wchar_t **ppExit ) const;
 	DWORD GetNumber( const wchar_t *pString, const wchar_t **ppExit ) const;
 	bool  GetNote( const wchar_t *pString, DWORD defaultTick, char *pNote, DWORD *pGateTime, const wchar_t **ppExit ) const;
