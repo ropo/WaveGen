@@ -9,7 +9,8 @@ public:
 	virtual ~SeqInputMML();
 
 	bool Init( SoundManager *pManager );
-	bool CompileMML( const wchar_t *pMML );
+	bool CompileMML( const wchar_t *pMML, int *pErrorCode, DWORD *pErrorLine );
+	static const wchar_t* GetErrorString( int errorCode );
 	virtual bool Tick( DWORD dwTime );
 	void Play( DWORD dwTime );
 
@@ -19,6 +20,8 @@ private:
 		tagSOUNDSET(){
 			pSoundSet = NULL;
 			pGen = NULL;
+			pADSR = NULL;
+			pVolume = NULL;
 		}
 
 		SoundEffectSet	*pSoundSet;
@@ -37,31 +40,29 @@ private:
 		,CMD_ADSR
 		,CMD_VOLUME
 	};
-	typedef struct tagADSRPARAM{
-		float aPower;
-		float aTime;
-		float dTime;
-		float sPower;
-		float rTime;
-	}ADSRPARAM;
-	typedef struct tagNOTEONPARAM{
-		BYTE	note;
-		BYTE	sweepNote;
-		float	sweepTime;
-	}NOTEONPARAM;
 	typedef struct tagTOKEN{
-		eCMD		command;
-		BYTE		track;
-		DWORD		param;
+		eCMD		command;		// コマンド
+		BYTE		track;			// 対象トラック番号
+		DWORD		param;			// 汎用パラメータ
 		union {
-			ADSRPARAM	paramADSR;
-			NOTEONPARAM	paramNoteOn;
+			struct tagADSR{			// CMD_ADSR 用パラメータ
+				float aPower;
+				float aTime;
+				float dTime;
+				float sPower;
+				float rTime;
+			}paramADSR;
+			struct tagNOTEON{		// CMD_NOTE_ON 用パラメータ
+				BYTE	note;
+				BYTE	sweepNote;
+				float	sweepTime;
+			}paramNoteOn;
 		}u1;
-		DWORD		gateTick;
+		DWORD		gateTick;		// ゲート時間(tick数)
 	}TOKEN;
 
-	const wchar_t *CompilePhase1( const wchar_t *pSource ) const;
-	std::vector<TOKEN> CompilePhase2( const wchar_t *pSource ) const;
+	const wchar_t *CompilePhase1( const wchar_t *pSource, int *pErrorCode, DWORD *pErrorLine ) const;
+	std::vector<TOKEN> CompilePhase2( const wchar_t *pSource, int *pErrorCode, DWORD *pErrorLine ) const;
 	std::vector<TOKEN> CompilePhase3( std::vector<TOKEN> tokens ) const;
 	DWORD GetNoteTick( const wchar_t *pNoteSize, DWORD defaultTick, const wchar_t **ppExit ) const;
 	DWORD GetNumber( const wchar_t *pString, const wchar_t **ppExit ) const;

@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 
 #define TICKCOUNT	3840		// １小節の分解度 3840=256分音符長の三連符まで可
+#define ERR(x){	errorCode=(x); goto err; }
 
 SeqInputMML::SeqInputMML()
 	: m_pManager( NULL )
@@ -155,16 +156,19 @@ void SeqInputMML::Play( DWORD dwTime )
 }
 
 // MMLをコンパイルする
-bool SeqInputMML::CompileMML( const wchar_t *pMML )
+bool SeqInputMML::CompileMML( const wchar_t *pMML, int *pErrorCode, DWORD *pErrorLine  )
 {
 	// フェーズ１
-	const wchar_t *pPreCompiled = CompilePhase1( pMML );
+	const wchar_t *pPreCompiled = CompilePhase1( pMML, pErrorCode, pErrorLine );
 	if( pPreCompiled == NULL )
 		return true;
 
 	// フェーズ２
-	m_sequence = CompilePhase2( pPreCompiled );
+	m_sequence = CompilePhase2( pPreCompiled, pErrorCode, pErrorLine );
 	delete pPreCompiled;
+	if( *pErrorCode ) {
+		return true;
+	}
 
 	// フェーズ３
 	m_sequence = CompilePhase3( m_sequence );
@@ -251,20 +255,51 @@ DWORD SeqInputMML::GetTempoToTick( DWORD tempo ) const
 }
 
 // コンパイルフェーズ１：文字整形
-const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource ) const
+const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource, int *pErrorCode, DWORD *pErrorLine ) const
 {
-	wchar_t *pBuffer = new wchar_t[ wcslen(pSource) ];
-	wchar_t *w = pBuffer;
-
 	bool isLineComment = false;
 	bool isBlockComment = false;;
 	int loopCount = 0;
 	int parenCount = 0;
+	wchar_t *pBuffer = new wchar_t[ wcslen(pSource) ];
+	wchar_t *w = pBuffer;
+	int errorCode;
+	DWORD dwLineCount = 1;
 
+	// 改行の数を数えつつ、改行コードを \n に統一する
+	while( *pSource ) {
+		if( *pSource=='\r' ) {
+			pSource++;
+			if( *pSource=='\n' )
+				pSource++;
+			dwLineCount++;
+			*(w++)='\n';
+		}else if( *pSource=='\n' ) {
+			pSource++;
+			if( *pSource=='\r' )
+				pSource++;
+			dwLineCount++;
+			*(w++)='\n';
+		}else{
+			*(w++) = *(pSource++);
+		}
+	}
+	*w = '\0';
+
+	wchar_t *pWork = new wchar_t[ wcslen(pBuffer)+sizeof(DWORD)*dwLineCount ];
+	memcpy( pWork, pBuffer, wcslen(pBuffer) );
+
+	pSource = pBuffer;
+	w = pWork;
+	dwLineCount = 1;
 	while( *pSource ) {
 		// 改行？
-		if( pSource[0]=='\r' || pSource[0]=='\n' ) {
+		if( *pSource=='\n' ) {
 			isLineComment = false;
+			*(w++) = *(pSource++);
+			*(DWORD*)w = ++dwLineCount;
+			w += 2;
+			continue;
 		}
 
 		// ラインコメント？
@@ -280,7 +315,7 @@ const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource ) const
 			if(  wcsncmp( pSource, L"*/", 2 ) == 0 ) {
 				pSource += 2;
 				if( isBlockComment )	isBlockComment = false;
-				else					goto err;	// 始まる前に終わっていた
+				else					ERR(15);
 				continue;
 			}
 			// ブロックコメント開始？
@@ -297,8 +332,8 @@ const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource ) const
 			continue;
 		}
 
-		// 空白や改行は詰める
-		if( *pSource == ' ' || *pSource == '\t' || pSource[0]=='\r' || pSource[0]=='\n' ) {
+		// 空白は詰める
+		if( *pSource == ' ' || *pSource == '\t' ) {
 			pSource++;
 			continue;
 		}
@@ -313,7 +348,7 @@ const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource ) const
 		if( *pSource == ']' ) {
 			// 開始より終了が多い
 			if( loopCount == 0 )
-				goto err;
+				ERR(16);
 			loopCount--;
 		}
 		// 丸かっこ数のチェック
@@ -322,7 +357,7 @@ const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource ) const
 		if( *pSource == ')' ) {
 			// 開始より終了が多い
 			if( parenCount == 0 )
-				goto err;
+				ERR(17);
 			parenCount--;
 		}
 
@@ -334,16 +369,20 @@ const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource ) const
 	}
 	// ループが閉じられていない
 	if( loopCount != 0 )
-		goto err;
+		ERR(14);
 	// 丸カッコが閉じられていない
 	if( parenCount != 0 )
-		goto err;
+		ERR(18);
 
 	*w = '\0';
+	delete pBuffer;
 
-	return pBuffer;
+	return pWork;
 
 err:
+	*pErrorCode = errorCode;
+	*pErrorLine = dwLineCount;
+	delete pWork;
 	delete pBuffer;
 	return NULL;
 }
@@ -373,7 +412,7 @@ std::vector<std::wstring> SeqInputMML::GetParams( const wchar_t *pSource, const 
 }
 
 // コンパイルフェーズ２：トークン生成
-std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSource ) const
+std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSource, int *pErrorCode, DWORD *pErrorLine ) const
 {
 	// コンパイル中に必要なワーク構造体
 	typedef struct tagTOKENWORK : TOKEN {
@@ -401,6 +440,8 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 	TRACKWORK trackWork[MAX_TRACK];
 	char	onceOctave = 0;
 	bool	isSweep = false;
+	DWORD	dwLineCount = 1;
+	int		errorCode = 0;
 
 	// 省略可能な値をすべて設定しておく
 	int		currentOctave = 5;
@@ -426,11 +467,19 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 	while( *pSource ) {
 		token.gateTick = 0;
 
+		// 改行コード
+		if( *pSource == '\n' ) {
+			pSource++;
+			dwLineCount = *(DWORD*)pSource;
+			pSource += 2;
+			continue;
+		}
+
 		// ADSRエフェクト指定？
 		if( wcsncmp( pSource, L"adsr(", 5 ) == 0 ) {
 			std::vector<std::wstring> params = GetParams( pSource+5, &pSource );
 			if( params.size() != 5 )
-				goto err;	// 引数の数が不正
+				ERR(1)	// 引数の数が不正
 			token.command = CMD_ADSR;
 			token.gateTick = 0;
 			token.u1.paramADSR.aPower = (float)_wtof( params[0].c_str() );
@@ -439,34 +488,38 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 			token.u1.paramADSR.sPower = (float)_wtof( params[3].c_str() );
 			token.u1.paramADSR.rTime  = (float)_wtof( params[4].c_str() );
 			pTokens->push_back( token );
+			continue;
 		}
 
 		// トラックチェンジ？
 		if( wcsncmp( pSource, L"track(", 6 ) == 0 ) {
 			if( !loopStack.empty() )
-				goto err;	// ループが完結してない
+				ERR(2)
 			if( isSweep )
-				goto err;	// スイープ中にトラックチェンジ
+				ERR(3)
 			std::vector<std::wstring> params = GetParams( pSource+6, &pSource );
 			if( params.size() != 1 )
-				goto err;	// 引数の数が不正
+				ERR(4)
 			currentTrack = _wtoi( params[0].c_str() ) % MAX_TRACK;
 			pTokens = &trackWork[ currentTrack ].tokens;
+			continue;
 		}
 
 		switch( *pSource ) {
-			case 'o':	currentOctave = GetNumber( pSource+1, &pSource );
-						if( currentOctave == 0 )
-							goto err;	// 引数がない
-					break;
-			case 'l':	defaultTick = GetNoteTick( pSource+1, defaultTick, &pSource );
-						if( defaultTick == 0 )
-							goto err;	// 引数がない
-					break;
+			case 'o':{	const wchar_t *pStart = pSource+1;
+						currentOctave = GetNumber( pStart, &pSource );
+						if( pStart == pSource || currentOctave>8 )
+							ERR(5)
+					}break;
+			case 'l':{	const wchar_t *pStart = pSource+1;
+						defaultTick = GetNoteTick( pStart, defaultTick, &pSource );
+						if( pStart == pSource )
+							ERR(6)
+					}break;
 			case 't':	token.command = CMD_TEMPO;
 						token.param = GetTempoToTick( GetNumber( pSource+1, &pSource ) );
 						if( token.param == 0 )
-							goto err;	// 引数がない
+							ERR(7)
 						pTokens->push_back( token );
 					break;
 			case '<':	currentOctave--;
@@ -475,8 +528,8 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 						pSource++;
 					break;
 			case '>':	currentOctave++;
-						if( currentOctave > 9 )
-							currentOctave = 9;
+						if( currentOctave > 8 )
+							currentOctave = 8;
 						pSource++;
 					break;
 			case 'q':	noteOnGate = GetNumber( pSource+1, &pSource );
@@ -501,7 +554,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 						char note;
 						DWORD gateTime;
 						if( GetNote( pSource, defaultTick, &note, &gateTime, &pSource ) )
-							goto err;		// 来ることないけども一応不正エラー
+							ERR(8)
 
 						if( note >= 0 ) {
 							if( isSweep ) {
@@ -515,7 +568,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 								if( i ) {
 									pOff = pOn+1;
 									if( pOff->command != CMD_NOTE_OFF )
-										goto err;	// 見つけた NOTE_ON の直後が OFF じゃない(ロジックエラー)
+										ERR(9)
 									pOn->gateTick += gateTime + pOff->gateTick;
 
 									// 長さを混ぜる
@@ -551,7 +604,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 							}
 						}else{
 							if( isSweep )
-								goto err;		// スイープ後に休符が来ている 
+								ERR(10)
 							token.command = CMD_NOTE_OFF;
 							token.param = 1000;
 							token.gateTick = gateTime;
@@ -574,7 +627,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 						loopStack.push( loopInfo );
 					}break;
 			case ':':{	if( loopStack.empty() )
-							goto err;	// ループブロックじゃないのにエスケープ記号がある
+							ERR(11)
 						LOOPINFO loopInfo = loopStack.top();
 						if( loopInfo.loopCount == 1 ) {
 							loopStack.pop();
@@ -586,11 +639,11 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 								loopInfo.pEscape = pSource;
 								loopStack.push( loopInfo );
 							}else if( loopInfo.pEscape != pSource )
-								goto err;	// １つのループブロック中に : が複数あった
+								ERR(12)
 						}
 					}break;
 			case ']':{	if( loopStack.empty() )
-							goto err;	// ループブロックじゃないのに、ループ終端がある
+							ERR(13)
 						LOOPINFO loopInfo = loopStack.top();
 						loopStack.pop();
 						loopInfo.loopCount--;
@@ -603,12 +656,12 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 							loopStack.push( loopInfo );
 						}
 					}break;
-			default:	pSource++;
+			default:	ERR(19)
 		}
 		onceOctave = 0;
 	}
 	if( !loopStack.empty() )
-		goto err;	// ループが完結していない
+		ERR(14)
 
 	// トラックごとに配置インデックスと再生開始時間(Tick)を書き込み１本のトラック情報にマージ
 	DWORD tokenIndex = 0;
@@ -645,9 +698,14 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 	token.gateTick = 0;
 	resultTokens.push_back( token );
 
+	*pErrorCode = 0;
+	*pErrorLine = 0;
 	return result;
 
 err:
+	*pErrorCode = errorCode;
+	*pErrorLine = dwLineCount;
+
 	result.clear();
 	return result;
 }
@@ -683,3 +741,30 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase3( std::vector<TOKEN> t
 	return result;
 }
 
+const wchar_t* SeqInputMML::GetErrorString( int errorCode )
+{
+	switch( errorCode )
+	{
+		case 0:	return L"エラーなし";
+		case 1:	return L"ADSRの引数が無効";
+		case 2:	return L"ループブロック( [ )が閉じられずにトラックを変更している";
+		case 3: return L"スイープ( & )中にトラックを変更している";
+		case 4: return L"トラック変更の引数が不正";
+		case 5: return L"オクターブ( o )引数が不正 0-8";
+		case 6: return L"省略時の音調指定( l )が不正";
+		case 7: return L"テンポ指定( t )が不正 0-8";
+		case 8: return L"音階取得エラー";
+		case 9: return L"スイープ解析エラー";
+		case 10:return L"スイープ( & )後に休符( r )が指定されている";
+		case 11:return L"ループブロック外に、ループエスケープマーク( : )がある";
+		case 12:return L"ループブロック( [ ) 中に、エスケープマーク( : )が複数ある";
+		case 13:return L"ループブロック( [ )がないのにループ終端マーク( ] )がある";
+		case 14:return L"ループブロック( [ )が閉じられていない";
+		case 15:return L"始まりのないコメントブロック終端がある( */ )";
+		case 16:return L"始まりのないループブロック終端がある( ] )";
+		case 17:return L"始まりのないパラメータブロック終端がある( ) )";
+		case 18:return L"パラメータブロック( ( )が閉じられていない";
+		case 19:return L"不明な命令があります";
+	}
+	return L"不明なエラー";
+}

@@ -43,9 +43,41 @@ DWORD AppMain::TickThread()
 	m_threadIsExit = true;
 	return 0;
 }
+AppMain::COMMANDPARAM AppMain::ParseCommandLine()
+{
+	COMMANDPARAM params;
+	params.mmlFile = L"sample.mml";
+	params.isDiskWrite = false;
+
+	int at;
+	std::wstring commandLine = GetCommandLine();
+	std::vector<std::wstring> tokens;
+	while( (at = commandLine.find_first_of(L" ")) != commandLine.npos ) {
+		if( at > 0 )	tokens.push_back( commandLine.substr(0,at) );
+		commandLine = commandLine.substr(at+1);
+	}
+	if( commandLine.length() > 0 )
+		tokens.push_back( commandLine );
+	tokens.erase( tokens.begin() );
+
+	for( std::vector<std::wstring>::iterator itr=tokens.begin(); itr!=tokens.end(); ++itr ) {
+		std::wstring token = *itr;
+		std::transform(token.begin(), token.end(), token.begin(), std::tolower);
+		if( token.compare( L"-disk" )==0 )
+			params.isDiskWrite = true;
+		else
+			params.mmlFile = *itr;
+	}
+
+	return params;
+}
 
 bool AppMain::Startup()
 {
+	// 引数解析
+	COMMANDPARAM commandParams = ParseCommandLine();
+
+
 	InitializeCriticalSection( &m_cs );
 
 	m_threadHandle = CreateThread( NULL, 0, AppMain::TickThreadBase, this, CREATE_SUSPENDED, NULL );
@@ -56,7 +88,7 @@ bool AppMain::Startup()
 	m_threadIsExit = false;
 
 	// 出力デバイスの作成
-	if( ChangeOutputDS() )
+	if( (commandParams.isDiskWrite ? ChangeOutputWaveFile() : ChangeOutputDS()) )
 		return true;
 
 	// サウンドマネージャの作成
@@ -64,7 +96,7 @@ bool AppMain::Startup()
 	m_pSoundMan->SetOutput( m_pSoundOutput );
 
 	//
-	std::wifstream ifs( L"sample.mml", std::ios::binary );
+	std::wifstream ifs( commandParams.mmlFile, std::ios::binary );
 	if( ifs.fail() ) {
 		return true;
 	}
@@ -78,11 +110,16 @@ bool AppMain::Startup()
 	pMML[ fileSize ] = '\0';
 
 	// プレイヤーをセット
+	int errorCode;
+	DWORD errorLine;
 	m_pSeqInputBase = new SeqInputMML();
 	((SeqInputMML*)m_pSeqInputBase)->Init( m_pSoundMan );
-	((SeqInputMML*)m_pSeqInputBase)->CompileMML( pMML );
+	if( ((SeqInputMML*)m_pSeqInputBase)->CompileMML( pMML, &errorCode, &errorLine ) ) {
+		wchar_t errorMessage[1024];
+		wsprintf( errorMessage, L"エラー\n %d行目\n%s", errorLine, SeqInputMML::GetErrorString( errorCode ) );
+		MessageBox( m_hWnd, errorMessage, L"WAVEGEN", MB_ICONSTOP );
+	}
 	((SeqInputMML*)m_pSeqInputBase)->Play( timeGetTime() );
-
 	ResumeThread( m_threadHandle );
 
 	delete pMML;

@@ -28,13 +28,20 @@ private:
 			LPCRITICAL_SECTION	m_hCS;
 	};
 
+	typedef struct tagCOMMANDPARAM {
+		std::wstring	mmlFile;
+		bool			isDiskWrite;
+	}COMMANDPARAM;
+
 	SoundOutputBase	*m_pSoundOutput;
 	SeqInputBase	*m_pSeqInputBase;
 	SoundManager	*m_pSoundMan;
 	HANDLE			m_threadHandle;
 	CRITICAL_SECTION m_cs;
 	volatile bool	m_threadIsExit;
+	COMMANDPARAM	m_commandParams;
 
+	static COMMANDPARAM ParseCommandLine();
 	static DWORD WINAPI TickThreadBase( LPVOID pParam );
 	DWORD TickThread();
 };

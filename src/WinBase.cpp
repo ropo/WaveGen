@@ -51,7 +51,7 @@ static HWND InitInstance( HINSTANCE hInst )
 		  WS_EX_ACCEPTFILES
 		, wcex.lpszClassName
 		, L"WaveGen" 
-		, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_THICKFRAME
+		, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU
 		, CW_USEDEFAULT, 0
 		, CW_USEDEFAULT, 0
 		, NULL
@@ -59,6 +59,12 @@ static HWND InitInstance( HINSTANCE hInst )
 		, wcex.hInstance
 		, NULL
 	);
+
+	RECT cRect;
+	GetWindowRect( hWnd, &cRect );
+	RECT rect = {cRect.left,cRect.top,cRect.left+300,cRect.top+200};
+	AdjustWindowRectEx( &rect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE, WS_EX_ACCEPTFILES );
+	MoveWindow( hWnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, FALSE );
 
 	return hWnd;
 }
