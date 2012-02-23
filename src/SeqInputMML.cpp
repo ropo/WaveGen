@@ -81,10 +81,11 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 	switch( token.command )
 	{
 		case CMD_NOTE_ON:
-					if( token.param <= 127 ) {
-						pSS->pGen->ChangeFreq( GetFreq( (BYTE)token.param ) );
-						pSS->pADSR->NoteOn();
-					}
+					if( token.u1.paramNoteOn.sweepTime > 0 )
+						pSS->pGen->ChangeFreqSweep( GetFreq( token.u1.paramNoteOn.note ), GetFreq( token.u1.paramNoteOn.sweepNote ), token.u1.paramNoteOn.sweepTime );
+					else
+						pSS->pGen->ChangeFreq( GetFreq( token.u1.paramNoteOn.note ) );
+					pSS->pADSR->NoteOn();
 				break;
 		case CMD_NOTE_OFF:
 					pSS->pADSR->NoteOff();
@@ -108,11 +109,11 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 					m_tickParSec = token.param;
 				break;
 		case CMD_ADSR:
-					pSS->pADSR->ChangeParam(  token.paramADSR.aPower
-											, token.paramADSR.aTime
-											, token.paramADSR.dTime
-											, token.paramADSR.sPower
-											, token.paramADSR.rTime );
+					pSS->pADSR->ChangeParam(  token.u1.paramADSR.aPower
+											, token.u1.paramADSR.aTime
+											, token.u1.paramADSR.dTime
+											, token.u1.paramADSR.sPower
+											, token.u1.paramADSR.rTime );
 				break;
 		case CMD_VOLUME:
 					pSS->pVolume->ChangeVolume( token.param/127.0f );
@@ -399,6 +400,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 	std::vector<TOKEN> result;
 	TRACKWORK trackWork[MAX_TRACK];
 	char	onceOctave = 0;
+	bool	isSweep = false;
 
 	// 省略可能な値をすべて設定しておく
 	int		currentOctave = 5;
@@ -431,11 +433,11 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 				goto err;	// 引数の数が不正
 			token.command = CMD_ADSR;
 			token.gateTick = 0;
-			token.paramADSR.aPower = (float)_wtof( params[0].c_str() );
-			token.paramADSR.aTime = (float)_wtof( params[1].c_str() );
-			token.paramADSR.dTime = (float)_wtof( params[2].c_str() );
-			token.paramADSR.sPower = (float)_wtof( params[3].c_str() );
-			token.paramADSR.rTime = (float)_wtof( params[4].c_str() );
+			token.u1.paramADSR.aPower = (float)_wtof( params[0].c_str() );
+			token.u1.paramADSR.aTime  = (float)_wtof( params[1].c_str() );
+			token.u1.paramADSR.dTime  = (float)_wtof( params[2].c_str() );
+			token.u1.paramADSR.sPower = (float)_wtof( params[3].c_str() );
+			token.u1.paramADSR.rTime  = (float)_wtof( params[4].c_str() );
 			pTokens->push_back( token );
 		}
 
@@ -443,6 +445,8 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 		if( wcsncmp( pSource, L"track(", 6 ) == 0 ) {
 			if( !loopStack.empty() )
 				goto err;	// ループが完結してない
+			if( isSweep )
+				goto err;	// スイープ中にトラックチェンジ
 			std::vector<std::wstring> params = GetParams( pSource+6, &pSource );
 			if( params.size() != 1 )
 				goto err;	// 引数の数が不正
@@ -500,16 +504,54 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 							goto err;		// 来ることないけども一応不正エラー
 
 						if( note >= 0 ) {
-							token.command = CMD_NOTE_ON;
-							token.param = MinMax( (onceOctave + currentOctave) * 12 + note, 0, 127 );
-							token.gateTick = gateTime * noteOnGate / 100;
-							pTokens->push_back( token );
+							if( isSweep ) {
+								// スイープ
+								TOKENWORK *pOff, *pOn = &(*pTokens)[pTokens->size()-1];
+								size_t i;
+								for( i=pTokens->size(); i; --i, --pOn ) {
+									if( pOn->command == CMD_NOTE_ON )
+										break;
+								}
+								if( i ) {
+									pOff = pOn+1;
+									if( pOff->command != CMD_NOTE_OFF )
+										goto err;	// 見つけた NOTE_ON の直後が OFF じゃない(ロジックエラー)
+									pOn->gateTick += gateTime + pOff->gateTick;
 
-							token.command = CMD_NOTE_OFF;
-							token.param = note;
-							token.gateTick = gateTime - token.gateTick;
-							pTokens->push_back( token );
+									// 長さを混ぜる
+									gateTime = pOn->gateTick;
+									pOn->gateTick  = gateTime * noteOnGate / 100;
+									pOff->gateTick = gateTime - pOn->gateTick;
+
+									if( pOn->u1.paramNoteOn.note != note ) {
+										// スラー
+										pOn->u1.paramNoteOn.sweepNote = (BYTE)MinMax( (onceOctave + currentOctave) * 12 + note, 0, 127 );
+										pOn->u1.paramNoteOn.sweepTime = pOn->gateTick / (float)TICKCOUNT;
+										if( pOn->u1.paramNoteOn.sweepNote == pOn->u1.paramNoteOn.note )
+											pOn->u1.paramNoteOn.sweepTime = 0;	// 巡り巡って起点と同じ音階ならタイになる
+									}
+								}
+							}else{
+								token.command = CMD_NOTE_ON;
+								token.u1.paramNoteOn.note = (BYTE)MinMax( (onceOctave + currentOctave) * 12 + note, 0, 127 );
+								token.gateTick = gateTime * noteOnGate / 100;
+								token.u1.paramNoteOn.sweepTime = 0;
+								pTokens->push_back( token );
+
+								token.command = CMD_NOTE_OFF;
+								token.gateTick = gateTime - token.gateTick;
+								pTokens->push_back( token );
+							}
+
+							if( *pSource == '&' ) {
+								isSweep = true;
+								pSource++;
+							}else{
+								isSweep = false;
+							}
 						}else{
+							if( isSweep )
+								goto err;		// スイープ後に休符が来ている 
 							token.command = CMD_NOTE_OFF;
 							token.param = 1000;
 							token.gateTick = gateTime;

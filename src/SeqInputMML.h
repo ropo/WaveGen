@@ -44,11 +44,19 @@ private:
 		float sPower;
 		float rTime;
 	}ADSRPARAM;
+	typedef struct tagNOTEONPARAM{
+		BYTE	note;
+		BYTE	sweepNote;
+		float	sweepTime;
+	}NOTEONPARAM;
 	typedef struct tagTOKEN{
 		eCMD		command;
 		BYTE		track;
 		DWORD		param;
-		ADSRPARAM	paramADSR;
+		union {
+			ADSRPARAM	paramADSR;
+			NOTEONPARAM	paramNoteOn;
+		}u1;
 		DWORD		gateTick;
 	}TOKEN;
 

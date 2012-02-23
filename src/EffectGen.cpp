@@ -12,8 +12,10 @@ EffectGen::~EffectGen()
 }
 void EffectGen::ChangeFreq( float freq )
 {
+	m_freq = freq;
 	m_tph = BASE_FREQ / freq;
 	m_blockCount = 0;
+	m_sweepFreq = 0;
 }
 void EffectGen::ChangeType( eTYPE type )
 {
@@ -46,11 +48,24 @@ void EffectGen::ChangeSquareDuty( float duty )
 {
 	m_squareDuty = MinMax( duty, FLT_EPSILON, 1.0f-FLT_EPSILON );
 }
+
+void EffectGen::ChangeFreqSweep( float fromFreq, float toFreq, float time )
+{
+	if( time <= 0 ) {
+		ChangeFreq( toFreq );
+		m_sweepFreq = 0;
+	}else{
+		ChangeFreq( fromFreq );
+		m_sweepFreq = (toFreq - fromFreq) / (BASE_FREQ * time);
+	}
+}
+
 void EffectGen::Release()
 {
 }
 void EffectGen::Reset()
 {
+	m_sweepFreq = 0;
 }
 
 void EffectGen::Effect( float *pBuffer, size_t bloackSize )
@@ -63,6 +78,10 @@ void EffectGen::Effect( float *pBuffer, size_t bloackSize )
 			isFirst = true;
 		}
 		*pBuffer += (this->*m_fncEffect)( isFirst );
+		if( m_sweepFreq ) {
+			m_freq += m_sweepFreq;
+			m_tph = BASE_FREQ / m_freq;
+		}
 	}
 }
 

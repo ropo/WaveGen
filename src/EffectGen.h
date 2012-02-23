@@ -20,6 +20,7 @@ public:
 	void Effect( float *pBuffer, size_t size );
 
 	void ChangeFreq( float freq );
+	void ChangeFreqSweep( float fromFreq, float toFreq, float time );
 	void ChangeType( eTYPE type );
 	void ChangeSquareDuty( float duty );
 
@@ -37,4 +38,6 @@ private:
 	float	m_blockCount;
 	float	m_noise;
 	float	m_squareDuty;
+	float	m_freq;
+	float	m_sweepFreq;
 };
