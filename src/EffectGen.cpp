@@ -4,6 +4,7 @@ EffectGen::EffectGen( float freq, eTYPE type )
 {
 	ChangeFreq( freq );
 	ChangeType( type );
+	ChangeSquareDuty( 0.5f );
 }
 
 EffectGen::~EffectGen()
@@ -16,6 +17,7 @@ void EffectGen::ChangeFreq( float freq )
 }
 void EffectGen::ChangeType( eTYPE type )
 {
+	m_type = type;
 	switch( type )
 	{
 		case SQUARE:
@@ -40,6 +42,10 @@ void EffectGen::ChangeType( eTYPE type )
 			break;
 	}
 }
+void EffectGen::ChangeSquareDuty( float duty )
+{
+	m_squareDuty = MinMax( duty, FLT_EPSILON, 1.0f-FLT_EPSILON );
+}
 void EffectGen::Release()
 {
 }
@@ -63,13 +69,14 @@ void EffectGen::Effect( float *pBuffer, size_t bloackSize )
 // 矩形波
 float EffectGen::EffectSquare( bool )
 {
-	return ( ( m_tph/2 < m_blockCount ) ? 1.0f : -1.0f );
+	return ( ( m_tph * m_squareDuty < m_blockCount ) ? 1.0f : -1.0f );
 }
 
 // 三角波
 float EffectGen::EffectTriangle( bool )
 {
 	float v = CalcLiner( 0, m_tph, m_blockCount ) * 4.0f;
+
 	if( v >= 2.0f )	return 3.0f-v;
 	else			return v-1.0f;
 }

@@ -101,6 +101,9 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 					}
 					pSS->pGen->ChangeType( pg );
 				}break;
+		case CMD_DUTY_CHANGE: {
+					pSS->pGen->ChangeSquareDuty( token.param / 1000.0f );
+				}break;
 		case CMD_TEMPO:
 					m_tickParSec = token.param;
 				break;
@@ -476,8 +479,13 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 						if( noteOnGate < 0 )		noteOnGate = 0;
 						else if( noteOnGate > 100 )	noteOnGate = 100;
 					break;
-			case '@':	token.command = CMD_PROGRAM_CHANGE;
-						token.param = GetNumber( pSource+1, &pSource );
+			case '@':	if( pSource[1] == 'w' ) {
+							token.command = CMD_DUTY_CHANGE;
+							token.param = GetNumber( pSource+2, &pSource );
+						}else{
+							token.command = CMD_PROGRAM_CHANGE;
+							token.param = GetNumber( pSource+1, &pSource );
+						}
 						pTokens->push_back( token );
 					break;
 			case 'v':	token.command = CMD_VOLUME;

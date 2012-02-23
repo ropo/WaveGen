@@ -21,6 +21,7 @@ public:
 
 	void ChangeFreq( float freq );
 	void ChangeType( eTYPE type );
+	void ChangeSquareDuty( float duty );
 
 private:
 	float EffectSquare( bool isFirst );
@@ -31,7 +32,9 @@ private:
 	float EffectSilent( bool isFirst );
 
 	float(EffectGen::*m_fncEffect)( bool isFirst );
+	eTYPE	m_type;
 	float	m_tph;
 	float	m_blockCount;
 	float	m_noise;
+	float	m_squareDuty;
 };
