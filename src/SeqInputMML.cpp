@@ -599,7 +599,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 						}else{
 							if( isSweep )
 								ERR(10)
-							token.command = CMD_NOTE_OFF;
+							token.command = CMD_NOTE_REST;
 							token.param = 1000;
 							token.gateTick = gateTime;
 							pTokens->push_back( token );
