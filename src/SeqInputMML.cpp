@@ -48,24 +48,11 @@ bool SeqInputMML::Init( SoundManager *pManager )
 // 指定ノート番号の周波者数を取得
 float SeqInputMML::GetFreq( BYTE note ) const
 {
-	if( note >= 128 )
-		return 0;
-
-	static const float freqs[127] = {
-			16.3516f,   17.3239f,   18.3540f,   19.4454f,   20.6017f,   21.8268f,   23.1247f,   24.4997f,   25.9565f,   27.5000f,   29.1352f,   30.8677f
-		,   32.7032f,   34.6478f,   36.7081f,   38.8909f,   41.2034f,   43.6535f,   46.2493f,   48.9994f,   51.9131f,   55.0000f,   58.2705f,   61.7354f
-		,   65.4064f,   69.2957f,   73.4162f,   77.7817f,   82.4069f,   87.3071f,   92.4986f,   97.9989f,  103.8262f,  110.0000f,  116.5409f,  123.4708f
-		,  130.8128f,  138.5913f,  146.8324f,  155.5635f,  164.8138f,  174.6141f,  184.9972f,  195.9977f,  207.6523f,  220.0000f,  233.0819f,  246.9417f
-		,  261.6256f,  277.1826f,  293.6648f,  311.1270f,  329.6276f,  349.2282f,  369.9944f,  391.9954f,  415.3047f,  440.0000f,  466.1638f,  493.8833f
-		,  523.2511f,  554.3653f,  587.3295f,  622.2540f,  659.2551f,  698.4565f,  739.9888f,  783.9909f,  830.6094f,  880.0000f,  932.3275f,  987.7666f
-		, 1046.5023f, 1108.7305f, 1174.6591f, 1244.5079f, 1318.5102f, 1396.9129f, 1479.9777f, 1567.9817f, 1661.2188f, 1760.0000f, 1864.6550f, 1975.5332f
-		, 2093.0045f, 2217.4610f, 2349.3181f, 2489.0159f, 2637.0205f, 2793.8259f, 2959.9554f, 3135.9635f, 3322.4376f, 3520.0000f, 3729.3101f, 3951.0664f
-		, 4186.0090f, 4434.9221f, 4698.6363f, 4978.0317f, 5274.0409f, 5587.6517f, 5919.9108f, 6271.9270f, 6644.8752f, 7040.0000f, 7458.6202f, 7902.1328f
-		, 8372.0181f, 8869.8442f, 9397.2726f, 9956.0635f,10548.0818f,11175.3034f,11839.8215f,12543.8540f,13289.7503f,14080.0000f,14917.2404f,15804.2656f
-		,16744.0362f,17739.6884f,18794.5451f,19912.1270f,21096.1636f,22350.6068f,23679.6431f
-	};
-
-	return freqs[ note ];
+	double freq = 28160;
+	double equalTempera = pow( 2, 1./12. );
+	for( int i=129-(note&0x7f); i; i-- )
+		freq /= equalTempera;
+	return (float)freq;
 }
 
 DWORD SeqInputMML::PlaySeq( DWORD index )
@@ -117,7 +104,7 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 											, token.u1.paramADSR.rTime );
 				break;
 		case CMD_VOLUME:
-					pSS->pVolume->ChangeVolume( token.param/127.0f );
+					pSS->pVolume->ChangeVolume( token.param/381.0f );
 				break;
 	}
 
@@ -261,10 +248,11 @@ const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource, int *pErrorCo
 	bool isBlockComment = false;;
 	int loopCount = 0;
 	int parenCount = 0;
-	wchar_t *pBuffer = new wchar_t[ wcslen(pSource) ];
+	wchar_t *pBuffer = new wchar_t[ wcslen(pSource)+1 ];
 	wchar_t *w = pBuffer;
 	int errorCode;
 	DWORD dwLineCount = 1;
+
 
 	// 改行の数を数えつつ、改行コードを \n に統一する
 	while( *pSource ) {
@@ -286,8 +274,8 @@ const wchar_t *SeqInputMML::CompilePhase1( const wchar_t *pSource, int *pErrorCo
 	}
 	*w = '\0';
 
-	wchar_t *pWork = new wchar_t[ wcslen(pBuffer)+sizeof(DWORD)*dwLineCount ];
-	memcpy( pWork, pBuffer, wcslen(pBuffer) );
+	wchar_t *pWork = new wchar_t[ wcslen(pBuffer)+sizeof(DWORD)*dwLineCount+1 ];
+	wmemcpy( pWork, pBuffer, wcslen(pBuffer)+sizeof(wchar_t) );
 
 	pSource = pBuffer;
 	w = pWork;
@@ -453,6 +441,12 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 		// 音色
 		token.command = CMD_PROGRAM_CHANGE;
 		token.param = 0;
+		token.gateTick = 0;
+		trackWork[i].tokens.push_back( token );
+
+		// 音量
+		token.command = CMD_VOLUME;
+		token.param = 100;
 		token.gateTick = 0;
 		trackWork[i].tokens.push_back( token );
 	}
@@ -692,11 +686,12 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 		resultTokens[i].gateTick = resultTokens[i+1].startTick - resultTokens[i].startTick;
 		result.push_back( resultTokens[i] );
 	}
+	result.push_back( resultTokens[resultTokens.size()-1] );
 
-	// 最後に終端マーカを入れる
+	// 終端マーカを入れる
 	token.command = CMD_END;
 	token.gateTick = 0;
-	resultTokens.push_back( token );
+	result.push_back( token );
 
 	*pErrorCode = 0;
 	*pErrorLine = 0;

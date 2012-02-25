@@ -47,19 +47,22 @@ void SoundManager::Store( void *pBuf, size_t byteSize )
 		return;
 
 
-	float *l = new float[blockSize];
-	float *r = new float[blockSize];
-	float *mixl = new float[blockSize];
-	float *mixr = new float[blockSize];
+	float *l = new float[blockSize];	// ワークバッファ(左ch)
+	float *r = new float[blockSize];	// ワークバッファ(右ch)
+	float *mixl = new float[blockSize];	// ミキシング用バッファ（左ch）
+	float *mixr = new float[blockSize];	// ミキシング用バッファ（右ch）
 	ZeroMemory( mixl, blockSize*sizeof(float) );
 	ZeroMemory( mixr, blockSize*sizeof(float) );
 
+	// エフェクトセットループ
 	for( EFFECTSETLISTITR itr=m_effectSet.begin(); itr!=m_effectSet.end(); ++itr ) {
 		ZeroMemory( l, blockSize*sizeof(float) );
 		ZeroMemory( r, blockSize*sizeof(float) );
 
+		// エフェクトセットより波形データを取得
 		itr->pBase->GetWave( l, r, blockSize );
 
+		// ミキシング
 		float *prl = l, *prr = r;
 		float *pwl = mixl, *pwr = mixr;
 		for( size_t i=0; i<blockSize; i++ ) {
@@ -70,6 +73,7 @@ void SoundManager::Store( void *pBuf, size_t byteSize )
 	delete l;
 	delete r;
 
+	// ミキシングされたデータを float から short へ変換
 	float v;
 	short *w = (short*)pBuf;
 	const float *rl = mixl;

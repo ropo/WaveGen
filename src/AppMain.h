@@ -11,9 +11,14 @@ public:
 	virtual void Release();
 
 public:
-	bool ChangeOutputDS();
-	bool ChangeOutputWaveFile();
+	bool ChangeOutputDS( HWND hWnd );
+	bool ChangeOutputWaveFile( const wchar_t *pWriteFile=L"output.wav" );
+	bool CreatePlayThread();
+	void ReleasePlayThread();
 
+	SoundOutputBase	*m_pSoundOutput;
+	SeqInputBase	*m_pSeqInputBase;
+	SoundManager	*m_pSoundMan;
 
 private:
 	class CriticalBlock {
@@ -33,9 +38,6 @@ private:
 		bool			isDiskWrite;
 	}COMMANDPARAM;
 
-	SoundOutputBase	*m_pSoundOutput;
-	SeqInputBase	*m_pSeqInputBase;
-	SoundManager	*m_pSoundMan;
 	HANDLE			m_threadHandle;
 	CRITICAL_SECTION m_cs;
 	volatile bool	m_threadIsExit;

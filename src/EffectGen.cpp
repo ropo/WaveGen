@@ -77,7 +77,7 @@ void EffectGen::Effect( float *pBuffer, size_t bloackSize )
 			m_blockCount -= m_tph;
 			isFirst = true;
 		}
-		*pBuffer += (this->*m_fncEffect)( isFirst );
+		*pBuffer = (this->*m_fncEffect)( isFirst );
 		if( m_sweepFreq ) {
 			m_freq += m_sweepFreq;
 			m_tph = BASE_FREQ / m_freq;

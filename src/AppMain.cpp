@@ -17,10 +17,13 @@ AppMain::AppMain()
 	, m_pSoundMan( NULL )
 	, m_threadHandle( NULL )
 {
+	InitializeCriticalSection( &m_cs );
 }
 
 AppMain::~AppMain()
 {
+	Release();
+	DeleteCriticalSection( &m_cs );
 }
 
 DWORD WINAPI AppMain::TickThreadBase( LPVOID pParam )
@@ -77,18 +80,8 @@ bool AppMain::Startup()
 	// 引数解析
 	COMMANDPARAM commandParams = ParseCommandLine();
 
-
-	InitializeCriticalSection( &m_cs );
-
-	m_threadHandle = CreateThread( NULL, 0, AppMain::TickThreadBase, this, CREATE_SUSPENDED, NULL );
-	if( m_threadHandle == NULL ) {
-		DeleteCriticalSection( &m_cs );
-		return true;
-	}
-	m_threadIsExit = false;
-
 	// 出力デバイスの作成
-	if( (commandParams.isDiskWrite ? ChangeOutputWaveFile() : ChangeOutputDS()) )
+	if( (commandParams.isDiskWrite ? ChangeOutputWaveFile() : ChangeOutputDS(m_hWnd)) )
 		return true;
 
 	// サウンドマネージャの作成
@@ -120,29 +113,58 @@ bool AppMain::Startup()
 		MessageBox( m_hWnd, errorMessage, L"WAVEGEN", MB_ICONSTOP );
 	}
 	((SeqInputMML*)m_pSeqInputBase)->Play( timeGetTime() );
-	ResumeThread( m_threadHandle );
+
+	// 再生スレッドの実行
+	if( CreatePlayThread() )
+		return true;
 
 	delete pMML;
 
 	return false;
 }
 
-bool AppMain::ChangeOutputDS()
+bool AppMain::CreatePlayThread()
+{
+	m_threadIsExit = false;
+	m_threadHandle = CreateThread( NULL, 0, AppMain::TickThreadBase, this, 0, NULL );
+	if( m_threadHandle == NULL ) {
+		DeleteCriticalSection( &m_cs );
+		return true;
+	}
+	return false;
+}
+
+void AppMain::ReleasePlayThread()
+{
+	m_threadIsExit = true;
+	if( m_threadHandle ) {
+		DWORD dwExitCode;
+		for(;;) {
+			if( GetExitCodeThread( m_threadHandle, &dwExitCode )==0 || dwExitCode == STILL_ACTIVE ) {
+				Sleep( 100 );
+				continue;
+			}
+			break;
+		}
+	}
+}
+
+bool AppMain::ChangeOutputDS( HWND hWnd )
 {
 	CriticalBlock mb( &m_cs );
 
 	SAFE_DELETE( m_pSoundOutput );
 	m_pSoundOutput = new SoundOutputDS();
-	return ((SoundOutputDS*)m_pSoundOutput)->Create( m_hWnd, 0.05f );
+	return ((SoundOutputDS*)m_pSoundOutput)->Create( hWnd, 0.05f );
 }
 
-bool AppMain::ChangeOutputWaveFile()
+bool AppMain::ChangeOutputWaveFile( const wchar_t *pWriteFile)
 {
 	CriticalBlock mb( &m_cs );
 
 	SAFE_DELETE( m_pSoundOutput );
 	m_pSoundOutput = new SoundOutputWaveFile();
-	return ((SoundOutputWaveFile*)m_pSoundOutput)->Create( L"output.wav" );
+	return ((SoundOutputWaveFile*)m_pSoundOutput)->Create( pWriteFile );
 }
 
 bool AppMain::Tick()
@@ -150,7 +172,7 @@ bool AppMain::Tick()
 	BYTE keys[256];
 	::GetKeyboardState( keys );
 
-	if( keys['D'] & 0x80 ){	ChangeOutputDS();		CriticalBlock mb( &m_cs );	m_pSoundMan->SetOutput( m_pSoundOutput );	}
+	if( keys['D'] & 0x80 ){	ChangeOutputDS(m_hWnd);	CriticalBlock mb( &m_cs );	m_pSoundMan->SetOutput( m_pSoundOutput );	}
 	if( keys['F'] & 0x80 ){	ChangeOutputWaveFile();	CriticalBlock mb( &m_cs );	m_pSoundMan->SetOutput( m_pSoundOutput );	}
 
 	Sleep( 100 );
@@ -163,18 +185,7 @@ bool AppMain::Tick()
 
 void AppMain::Release()
 {
-	m_threadIsExit = true;
-	if( m_threadHandle ) {
-		DWORD dwExitCode;
-		for(;;) {
-			if( GetExitCodeThread( m_threadHandle, &dwExitCode )==0 || dwExitCode == STILL_ACTIVE ) {
-				Sleep( 100 );
-				continue;
-			}
-			DeleteCriticalSection( &m_cs );
-			break;
-		}
-	}
+	ReleasePlayThread();
 	SAFE_DELETE( m_pSoundMan );
 	SAFE_DELETE( m_pSoundOutput );
 	SAFE_DELETE( m_pSeqInputBase );
