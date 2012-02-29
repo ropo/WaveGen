@@ -173,9 +173,9 @@ namespace WaveGenEditor
                 if (waveGen.CompileMML(rchMML.Text, ref errorCode, ref errorLine, isWaveSave, dlgPlayFinished_, this))
                 {
                     stsNotify.Text = Resources.MMLerror.Replace( "_LINE_", errorLine.ToString() ).Replace( "_MSG_", WaveGenIF.GetErrorString(errorCode));
-                    
                     MoveLine((int)errorLine);
                     System.Media.SystemSounds.Exclamation.Play();
+                    cmdPlay.Checked = false;
                     return;
                 }
                 stsNotify.Text = "";

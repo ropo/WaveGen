@@ -81,6 +81,12 @@ WAVEGENDLL_API bool WINAPI CompileMML( HANDLE hInterface, LPCWSTR pMML, int *pEr
 	// MMLをコンパイル
 	SeqInputMML::COMPILEDINFO compileInfo;
 	compileInfo = pThis->pInputMML->CompileMML( pMML );
+
+	if( pErrorCode )
+		*pErrorCode = compileInfo.errorCode;
+	if( pErrorLine )
+		*pErrorLine = compileInfo.errorLine;
+
 	if( compileInfo.errorCode != 0 )
 		return true;
 
