@@ -1,4 +1,5 @@
 ﻿#include "stdafx.h"
+#define DEFAULTMML	L"sample.mml"
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCommand, int nCmdShow )
 {
@@ -12,44 +13,22 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpComma
 }
 
 AppMain::AppMain()
-	: m_pSoundOutput( NULL )
-	, m_pSeqInputBase( NULL )
-	, m_pSoundMan( NULL )
-	, m_threadHandle( NULL )
+	: m_pSoundMan( nullptr )
+	, m_exit( false )
 {
-	InitializeCriticalSection( &m_cs );
+	m_commandParams.isDiskWrite = false;
+	m_commandParams.mmlFile = DEFAULTMML;
 }
 
 AppMain::~AppMain()
 {
 	Release();
-	DeleteCriticalSection( &m_cs );
 }
 
-DWORD WINAPI AppMain::TickThreadBase( LPVOID pParam )
-{
-	AppMain *pThis = (AppMain*)pParam;
-	return pThis->TickThread();
-}
-
-DWORD AppMain::TickThread()
-{
-	while( !m_threadIsExit ) {
-		{
-			CriticalBlock mb( &m_cs );
-			if( m_pSeqInputBase->Tick( timeGetTime() ) )
-				m_threadIsExit = true;
-			m_pSoundMan->Tick();
-		}
-		Sleep( 10 );
-	}
-	m_threadIsExit = true;
-	return 0;
-}
 AppMain::COMMANDPARAM AppMain::ParseCommandLine()
 {
 	COMMANDPARAM params;
-	params.mmlFile = L"sample.mml";
+	params.mmlFile = DEFAULTMML;
 	params.isDiskWrite = false;
 
 	int at;
@@ -78,93 +57,83 @@ AppMain::COMMANDPARAM AppMain::ParseCommandLine()
 bool AppMain::Startup()
 {
 	// 引数解析
-	COMMANDPARAM commandParams = ParseCommandLine();
+	m_commandParams = ParseCommandLine();
 
-	// 出力デバイスの作成
-	if( (commandParams.isDiskWrite ? ChangeOutputWaveFile() : ChangeOutputDS(m_hWnd)) )
-		return true;
-
-	// サウンドマネージャの作成
-	m_pSoundMan = new SoundManager();
-	m_pSoundMan->SetOutput( m_pSoundOutput );
-
-	//
-	std::wifstream ifs( commandParams.mmlFile, std::ios::binary );
+	// MML読み込み
+	std::wifstream ifs( m_commandParams.mmlFile, std::ios::binary );
 	if( ifs.fail() ) {
 		return true;
 	}
-
 	size_t fileSize = (size_t)ifs.seekg( 0, std::ios::end ).tellg();
 	ifs.seekg( 0, std::ios::beg );
-
 	wchar_t *pMML = new wchar_t[fileSize+1];
 	ifs.read( pMML, fileSize );
 	ifs.close();
 	pMML[ fileSize ] = '\0';
 
+	// サウンドマネージャの作成
+	m_pSoundMan = new SoundManager();
+
 	// プレイヤーをセット
-	int errorCode;
-	DWORD errorLine;
-	m_pSeqInputBase = new SeqInputMML();
-	((SeqInputMML*)m_pSeqInputBase)->Init( m_pSoundMan );
-	if( ((SeqInputMML*)m_pSeqInputBase)->CompileMML( pMML, &errorCode, &errorLine ) ) {
+	SeqInputMML *pSeqInput = new SeqInputMML();
+	pSeqInput->Init( m_pSoundMan );
+	SeqInputMML::COMPILEDINFO compiledInfo;
+	compiledInfo = pSeqInput->CompileMML( pMML );
+	if( compiledInfo.errorCode != 0 ) {
 		wchar_t errorMessage[1024];
-		wsprintf( errorMessage, L"エラー\n %d行目\n%s", errorLine, SeqInputMML::GetErrorString( errorCode ) );
+		wsprintf( errorMessage, L"エラー\n %d行目\n%s", compiledInfo.errorLine, SeqInputMML::GetErrorString( compiledInfo.errorCode ) );
 		MessageBox( m_hWnd, errorMessage, L"WAVEGEN", MB_ICONSTOP );
 	}
-	((SeqInputMML*)m_pSeqInputBase)->Play( timeGetTime() );
-
-	// 再生スレッドの実行
-	if( CreatePlayThread() )
-		return true;
-
 	delete pMML;
 
-	return false;
-}
+	// マネージャにセット
+	m_pSoundMan->ChangeInput( pSeqInput );
 
-bool AppMain::CreatePlayThread()
-{
-	m_threadIsExit = false;
-	m_threadHandle = CreateThread( NULL, 0, AppMain::TickThreadBase, this, 0, NULL );
-	if( m_threadHandle == NULL ) {
-		DeleteCriticalSection( &m_cs );
+	// 出力デバイスのマネージャにセット
+	SoundOutputBase *pOutputBase = m_commandParams.isDiskWrite ? (SoundOutputBase*)ChangeOutputWaveFile() : (SoundOutputBase*)ChangeOutputDS(m_hWnd);
+	if( pOutputBase == nullptr )
 		return true;
-	}
+
+	if( m_commandParams.isDiskWrite )
+		((SoundOutputWaveFile*)pOutputBase)->Start();
+
+	// 再生開始
+	pSeqInput->Play( timeGetTime(), fncPlayFinishedBase, this );
+
 	return false;
 }
 
-void AppMain::ReleasePlayThread()
+void AppMain::fncPlayFinishedBase( void *pThis )
 {
-	m_threadIsExit = true;
-	if( m_threadHandle ) {
-		DWORD dwExitCode;
-		for(;;) {
-			if( GetExitCodeThread( m_threadHandle, &dwExitCode )==0 || dwExitCode == STILL_ACTIVE ) {
-				Sleep( 100 );
-				continue;
-			}
-			break;
-		}
+	((AppMain*)pThis)->m_exit = true;
+}
+
+SoundOutputDS* AppMain::ChangeOutputDS( HWND hWnd )
+{
+	if( m_pSoundMan == nullptr )
+		return nullptr;
+
+	SoundOutputDS *pSoundOutput = new SoundOutputDS();
+	if( pSoundOutput->Create( hWnd, 0.05f ) ) {
+		SAFE_DELETE( pSoundOutput );
+		return nullptr;
 	}
+	m_pSoundMan->ChangeOutput( pSoundOutput );
+	return pSoundOutput;
 }
 
-bool AppMain::ChangeOutputDS( HWND hWnd )
+SoundOutputWaveFile* AppMain::ChangeOutputWaveFile( const wchar_t *pWriteFile)
 {
-	CriticalBlock mb( &m_cs );
+	if( m_pSoundMan == nullptr )
+		return nullptr;
 
-	SAFE_DELETE( m_pSoundOutput );
-	m_pSoundOutput = new SoundOutputDS();
-	return ((SoundOutputDS*)m_pSoundOutput)->Create( hWnd, 0.05f );
-}
-
-bool AppMain::ChangeOutputWaveFile( const wchar_t *pWriteFile)
-{
-	CriticalBlock mb( &m_cs );
-
-	SAFE_DELETE( m_pSoundOutput );
-	m_pSoundOutput = new SoundOutputWaveFile();
-	return ((SoundOutputWaveFile*)m_pSoundOutput)->Create( pWriteFile );
+	SoundOutputWaveFile *pSoundOutput = new SoundOutputWaveFile();
+	if( pSoundOutput->Create( pWriteFile ) ) {
+		SAFE_DELETE( pSoundOutput );
+		return nullptr;
+	}
+	m_pSoundMan->ChangeOutput( pSoundOutput );
+	return pSoundOutput;
 }
 
 bool AppMain::Tick()
@@ -172,21 +141,19 @@ bool AppMain::Tick()
 	BYTE keys[256];
 	::GetKeyboardState( keys );
 
-	if( keys['D'] & 0x80 ){	ChangeOutputDS(m_hWnd);	CriticalBlock mb( &m_cs );	m_pSoundMan->SetOutput( m_pSoundOutput );	}
-	if( keys['F'] & 0x80 ){	ChangeOutputWaveFile();	CriticalBlock mb( &m_cs );	m_pSoundMan->SetOutput( m_pSoundOutput );	}
+	if( keys['D'] & 0x80 )	ChangeOutputDS(m_hWnd);
+	if( keys['F'] & 0x80 ){
+		SoundOutputWaveFile *pSoundOutput = ChangeOutputWaveFile();
+		if( pSoundOutput )
+			pSoundOutput->Start();
+	}
 
 	Sleep( 100 );
 
-	if(	m_threadIsExit )
-		return true;
-
-	return false;
+	return m_exit;
 }
 
 void AppMain::Release()
 {
-	ReleasePlayThread();
 	SAFE_DELETE( m_pSoundMan );
-	SAFE_DELETE( m_pSoundOutput );
-	SAFE_DELETE( m_pSeqInputBase );
 }

@@ -5,17 +5,23 @@
 class SeqInputMML : public SeqInputBase
 {
 public:
+	typedef struct tagCOMPILEDINFO {
+		int		errorCode;
+		DWORD	errorLine;
+		DWORD	maxTickCount;
+	}COMPILEDINFO;
+
 	SeqInputMML();
 	virtual ~SeqInputMML();
 
 	bool Init( SoundManager *pManager );
-	bool CompileMML( const wchar_t *pMML, int *pErrorCode, DWORD *pErrorLine );
+	COMPILEDINFO CompileMML( const wchar_t *pMML );
 	static const wchar_t* GetErrorString( int errorCode );
 	virtual bool Tick( DWORD dwTime );
-	void Play( DWORD dwTime );
+	void Play( DWORD dwTime, void(*playFinished)(void*)=nullptr, void *pPlayFinishedParam=nullptr );
+	void Stop();
 
 private:
-
 	typedef struct tagSOUNDSET {
 		tagSOUNDSET(){
 			pSoundSet = NULL;
@@ -23,7 +29,6 @@ private:
 			pADSR = NULL;
 			pVolume = NULL;
 		}
-
 		SoundEffectSet	*pSoundSet;
 		EffectGen		*pGen;
 		SoundEffectADSR	*pADSR;
@@ -82,4 +87,9 @@ private:
 	DWORD					m_nextTick;			// 次のSequenceを実行するTick
 	DWORD					m_tickParSec;		// １秒間のTick値
 	DWORD					m_startTime;		// 再生開始時間(ms)
+	bool					m_isStop;			// 停止中ならtrue
+	COMPILEDINFO			m_compiledInfo;		// 最上にコンパイルされた情報
+
+	void(*m_fncPlayFinidhed)( void* );			// 再生終了時にコールバックされる
+	void					*m_playFinishedParam;
 };

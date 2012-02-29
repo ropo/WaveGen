@@ -8,10 +8,11 @@ public:
 
 	bool Create( const wchar_t *pFileName );
 	void Release();
+	void Start();
+	void Stop();
 
-	virtual void Tick();
-	virtual size_t GetBlockSize() const;
-	virtual void Write( const void *pWaveData, size_t blockSize );
+	virtual size_t GetBlockSize( DWORD time ) const;
+	virtual void Write( const void *pWaveData, size_t blockSize, DWORD time );
 
 private:
 	HANDLE	m_fp;

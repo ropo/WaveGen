@@ -43,20 +43,15 @@ bool SoundOutputDS::Create( HWND hWnd, float bufferSec )
 	dsdesc.dwBufferBytes = GetBufferByte();
 	dsdesc.lpwfxFormat = &m_wfx;
 	dsdesc.guid3DAlgorithm = DS3DALG_DEFAULT;
-	ret = m_pDSDev->CreateSoundBuffer( &dsdesc, &m_pDSB, NULL );
+	ret = m_pDSDev->CreateSoundBuffer( &dsdesc, &m_pDSB, nullptr );
 	if( FAILED(ret) )
 		return true;
 
 	// バッファクリア
-	LPVOID lpvWrite = 0;
-	DWORD dwLength = 0;
-	if( DS_OK == m_pDSB->Lock( 0, 0, &lpvWrite, &dwLength, NULL, NULL, DSBLOCK_ENTIREBUFFER ) ) {
-		ZeroMemory( lpvWrite, dwLength );
-		m_pDSB->Unlock( lpvWrite, dwLength, NULL, 0);
-	}
+	Mute();
 
 	// 再生
-	m_pDSB->Play( NULL, 0, DSBPLAY_LOOPING );
+	m_pDSB->Play( 0, 0, DSBPLAY_LOOPING );
 	return false;
 }
 
@@ -64,27 +59,24 @@ DWORD SoundOutputDS::GetBufferByte() const
 {
 	return (DWORD)(m_wfx.nSamplesPerSec * m_wfx.nBlockAlign * m_bufferSec);
 }
-void SoundOutputDS::Tick()
-{
-}
 
-size_t SoundOutputDS::GetBlockSize() const
+size_t SoundOutputDS::GetBlockSize( DWORD ) const
 {
 	DWORD writeSize, playCursor;
-	m_pDSB->GetCurrentPosition( &playCursor, NULL );
+	m_pDSB->GetCurrentPosition( &playCursor, nullptr );
 	if( playCursor < m_writePos )	writeSize = GetBufferByte() - m_writePos + playCursor;
 	else							writeSize = playCursor - m_writePos;
 	return writeSize / 4;
 }
 
-void SoundOutputDS::Write( const void *pWaveData, size_t blockSize )
+void SoundOutputDS::Write( const void *pWaveData, size_t blockSize, DWORD time )
 {
-	if( m_pDSB == NULL )
+	if( m_pDSB == nullptr )
 		return;
 
 	LPVOID lpvWrite1, lpvWrite2;
 	DWORD dwLength1, dwLength2;
-	DWORD writeSize = GetBlockSize();
+	DWORD writeSize = GetBlockSize( time );
 	if( writeSize > blockSize )
 		writeSize = blockSize;
 	if( writeSize == 0 )
@@ -101,5 +93,18 @@ void SoundOutputDS::Write( const void *pWaveData, size_t blockSize )
 			m_writePos -= bufSize;
 	}else{
 		dwLength1 = dwLength2 = 0;
+	}
+}
+
+void SoundOutputDS::Mute()
+{
+	if( m_pDSB == nullptr )
+		return;
+
+	LPVOID lpvWrite = 0;
+	DWORD dwLength = 0;
+	if( DS_OK == m_pDSB->Lock( 0, 0, &lpvWrite, &dwLength, nullptr, nullptr, DSBLOCK_ENTIREBUFFER ) ) {
+		ZeroMemory( lpvWrite, dwLength );
+		m_pDSB->Unlock( lpvWrite, dwLength, nullptr, 0);
 	}
 }

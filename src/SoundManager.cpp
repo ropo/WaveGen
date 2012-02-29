@@ -1,12 +1,99 @@
 ﻿#include "stdafx.h"
 
 SoundManager::SoundManager()
-	: m_pOutputBase( NULL )
+	: m_pOutputBase( nullptr )
+	, m_pSeqInputBase( nullptr )
+	, m_threadHandle( nullptr )
+	, m_threadIsExit( true )
 {
+	InitializeCriticalSection( &m_cs );
+
+	// スレッド作成
+	CreateManagerThread();
 }
+
 SoundManager::~SoundManager()
 {
 	Release();
+
+	ReleaseManagerThread();
+	DeleteCriticalSection( &m_cs );
+}
+
+void SoundManager::ChangeOutput( SoundOutputBase *pBase )
+{
+	CriticalBlock mb( &m_cs );
+
+	SAFE_DELETE( m_pOutputBase );
+	m_pOutputBase = pBase;
+}
+
+void SoundManager::ChangeInput( SeqInputBase *pBase )
+{
+	CriticalBlock mb( &m_cs );
+
+	SAFE_DELETE( m_pSeqInputBase );
+	m_pSeqInputBase = pBase;
+}
+
+DWORD WINAPI SoundManager::ManagerThreadBase( LPVOID pParam )
+{
+	SoundManager *pThis = (SoundManager*)pParam;
+	return pThis->ManagerThread();
+}
+
+DWORD SoundManager::ManagerThread()
+{
+	while( !m_threadIsExit ) {
+		{
+			CriticalBlock mb( &m_cs );
+
+			DWORD time = timeGetTime();
+			// sequence
+			if( m_pSeqInputBase ) {
+				m_pSeqInputBase->Tick( time );
+			}
+
+			// in/output
+			if( m_pOutputBase ) {
+				size_t blockSize = m_pOutputBase->GetBlockSize( time );
+				void *pWaveData = new char[ blockSize*4 ];
+				Store( pWaveData, blockSize*4 );
+				m_pOutputBase->Write( pWaveData, blockSize, time );
+				delete pWaveData;
+			}
+		}
+		Sleep( 1 );
+	}
+
+	return 0;
+}
+
+bool SoundManager::CreateManagerThread()
+{
+	if( m_threadHandle != nullptr )
+		return true;
+
+	m_threadIsExit = false;
+	m_threadHandle = CreateThread( NULL, 0, ManagerThreadBase, this, 0, NULL );
+	if( m_threadHandle == nullptr )
+		return false;
+	return true;
+}
+
+void SoundManager::ReleaseManagerThread()
+{
+	m_threadIsExit = true;
+	if( m_threadHandle ) {
+		DWORD dwExitCode;
+		for(;;) {
+			if( GetExitCodeThread( m_threadHandle, &dwExitCode )==0 || dwExitCode == STILL_ACTIVE ) {
+				Sleep( 100 );
+				continue;
+			}
+			break;
+		}
+	}
 }
 
 DWORD SoundManager::Push( SoundEffectSet *pSES )
@@ -14,11 +101,13 @@ DWORD SoundManager::Push( SoundEffectSet *pSES )
 	EFFECTINFO effectInfo;
 	effectInfo.handle = m_effectHandle++;
 	effectInfo.pBase = pSES;
+
+	CriticalBlock mb( &m_cs );
 	m_effectSet.push_back( effectInfo );
 	return effectInfo.handle;
 }
 
-DWORD SoundManager::Push( SoundEffectSet *pSES, int updateHandle )
+DWORD SoundManager::Push( SoundEffectSet *pSES, DWORD updateHandle )
 {
 	Remove( updateHandle );
 	return Push( pSES );
@@ -26,6 +115,8 @@ DWORD SoundManager::Push( SoundEffectSet *pSES, int updateHandle )
 
 bool SoundManager::Remove( DWORD handle )
 {
+	CriticalBlock mb( &m_cs );
+
 	for( EFFECTSETLISTITR itr=m_effectSet.begin(); itr!=m_effectSet.end(); ++itr ) {
 		if( itr->handle == handle ) {
 			m_effectSet.erase( itr );
@@ -33,11 +124,6 @@ bool SoundManager::Remove( DWORD handle )
 		}
 	}
 	return true;
-}
-
-void SoundManager::SetOutput( SoundOutputBase *pSoundOutput )
-{
-	m_pOutputBase = pSoundOutput;
 }
 
 void SoundManager::Store( void *pBuf, size_t byteSize )
@@ -89,21 +175,12 @@ void SoundManager::Store( void *pBuf, size_t byteSize )
 	delete mixr;
 }
 
-void SoundManager::Tick()
-{
-	if( m_pOutputBase == NULL )
-		return;
-
-	m_pOutputBase->Tick();
-	size_t blockSize = m_pOutputBase->GetBlockSize();
-	void *pWaveData = new char[ blockSize*4 ];
-	Store( pWaveData, blockSize*4 );
-	m_pOutputBase->Write( pWaveData, blockSize );
-	delete pWaveData;
-}
-
 void SoundManager::Release()
 {
+	CriticalBlock mb( &m_cs );
+
+	SAFE_DELETE( m_pOutputBase );
+	SAFE_DELETE( m_pSeqInputBase );
 	for( EFFECTSETLISTITR itr = m_effectSet.begin(); itr!=m_effectSet.end(); ++itr ) {
 		itr->pBase->Release();
 		delete itr->pBase;

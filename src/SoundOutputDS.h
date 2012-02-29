@@ -8,10 +8,10 @@ public:
 
 	bool Create( HWND hWnd, float bufferSec );
 	void Release();
+	void Mute();
 
-	virtual void Tick();
-	virtual size_t GetBlockSize() const;
-	virtual void Write( const void *pWaveData, size_t blockSize );
+	virtual size_t GetBlockSize( DWORD time ) const;
+	virtual void Write( const void *pWaveData, size_t blockSize, DWORD time );
 
 private:
 	DWORD GetBufferByte() const;

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=NULL;}}
+#define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=nullptr;}}
 
 SoundOutputBase::SoundOutputBase()
 {

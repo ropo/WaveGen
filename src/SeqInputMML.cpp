@@ -4,7 +4,9 @@
 #define ERR(x){	errorCode=(x); goto err; }
 
 SeqInputMML::SeqInputMML()
-	: m_pManager( NULL )
+	: m_pManager( nullptr )
+	, m_isStop( true )
+	, m_fncPlayFinidhed( nullptr )
 {
 }
 
@@ -20,7 +22,7 @@ void SeqInputMML::Release()
 
 bool SeqInputMML::Init( SoundManager *pManager )
 {
-	if( pManager == NULL )
+	if( pManager == nullptr )
 		return true;
 
 	m_pManager = pManager;
@@ -57,6 +59,8 @@ float SeqInputMML::GetFreq( BYTE note ) const
 
 DWORD SeqInputMML::PlaySeq( DWORD index )
 {
+	CriticalBlock cb( &m_pManager->m_cs );
+
 	if( index >= m_sequence.size() )
 		return 0;
 
@@ -113,15 +117,22 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 
 bool SeqInputMML::Tick( DWORD dwTime )
 {
-	if( m_pManager == NULL )
+	if( m_isStop )
+		return true;
+	if( m_pManager == nullptr )
 		return true;
 	if( m_sequence.size() <= m_playIndex )
 		return true;
 
 	DWORD totalTick = (dwTime - m_startTime) * m_tickParSec / 1000;
 	while( m_nextTick <= totalTick ) {
-		if( m_sequence.size() <= m_playIndex )
+		if( m_sequence.size() <= m_playIndex ) {
+			m_isStop = true;
+			if( m_fncPlayFinidhed )
+				m_fncPlayFinidhed( m_playFinishedParam );
 			return true;
+		}
+
 
 		if( m_nextTick > totalTick )
 			return false;
@@ -132,36 +143,59 @@ bool SeqInputMML::Tick( DWORD dwTime )
 }
 
 // 再生
-void SeqInputMML::Play( DWORD dwTime )
+void SeqInputMML::Play( DWORD dwTime, void(*playFinished)(void*), void *pPlayFinishedParam )
 {
+	m_playFinishedParam = pPlayFinishedParam;
+	m_fncPlayFinidhed = playFinished;
+
 	m_startTime = dwTime;
 	m_totalTick = 0;
 	m_playIndex = 0;
 	m_nextTick = 0;
+	m_isStop = false;
 
 	Tick( dwTime );
 }
 
-// MMLをコンパイルする
-bool SeqInputMML::CompileMML( const wchar_t *pMML, int *pErrorCode, DWORD *pErrorLine  )
+// 停止
+void SeqInputMML::Stop()
 {
+	m_isStop = true;
+
+	// ノートオフ
+	CriticalBlock cb( &m_pManager->m_cs );
+	for( int i=0; i<MAX_TRACK; i++ ) {
+		m_holder[i].pADSR->NoteOff();
+	}
+}
+
+// MMLをコンパイルする
+SeqInputMML::COMPILEDINFO SeqInputMML::CompileMML( const wchar_t *pMML )
+{
+	COMPILEDINFO compiledInfo;
+	compiledInfo.errorCode = 0;
+
 	// フェーズ１
-	const wchar_t *pPreCompiled = CompilePhase1( pMML, pErrorCode, pErrorLine );
-	if( pPreCompiled == NULL )
-		return true;
+	const wchar_t *pPreCompiled = CompilePhase1( pMML, &compiledInfo.errorCode, &compiledInfo.errorLine );
+	if( compiledInfo.errorCode != 0 )
+		return std::move( compiledInfo );
 
 	// フェーズ２
-	m_sequence = CompilePhase2( pPreCompiled, pErrorCode, pErrorLine );
+	m_sequence = CompilePhase2( pPreCompiled, &compiledInfo.errorCode, &compiledInfo.errorLine );
 	delete pPreCompiled;
-	if( *pErrorCode ) {
-		return true;
-	}
+	if( compiledInfo.errorCode != 0 )
+		return std::move( compiledInfo );
 
 	// フェーズ３
-	m_sequence = CompilePhase3( m_sequence );
+	m_sequence = CompilePhase3( std::move( m_sequence ) );
 
+	// Tick数を数える
+	compiledInfo.maxTickCount = 0;
+	for( std::vector<TOKEN>::iterator itr=m_sequence.begin(); itr!=m_sequence.end(); ++itr )
+		compiledInfo.maxTickCount += itr->gateTick;
+	m_compiledInfo = compiledInfo;
 
-	return false;
+	return std::move( compiledInfo );
 }
 
 // 数字を返す
@@ -372,7 +406,7 @@ err:
 	*pErrorLine = dwLineCount;
 	delete pWork;
 	delete pBuffer;
-	return NULL;
+	return nullptr;
 }
 
 // 丸カッコ閉じまでの文字列を取得
@@ -396,7 +430,7 @@ std::vector<std::wstring> SeqInputMML::GetParams( const wchar_t *pSource, const 
 	if( ppExit )
 		*ppExit = pEnd+1;
 
-	return params;
+	return std::move( params );
 }
 
 // コンパイルフェーズ２：トークン生成
@@ -616,8 +650,8 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 						if( loopInfo.loopCount < 2 )
 							loopInfo.loopCount = 2;	// 最低でも２周する
 						loopInfo.pStart = pSource;
-						loopInfo.pEscape = NULL;
-						loopInfo.pEnd = NULL;
+						loopInfo.pEscape = nullptr;
+						loopInfo.pEnd = nullptr;
 						loopStack.push( loopInfo );
 					}break;
 			case ':':{	if( loopStack.empty() )
@@ -628,7 +662,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 							pSource = loopInfo.pEnd;
 						}else{
 							pSource++;
-							if( loopInfo.pEscape == NULL ) {
+							if( loopInfo.pEscape == nullptr ) {
 								loopStack.pop();
 								loopInfo.pEscape = pSource;
 								loopStack.push( loopInfo );
@@ -695,14 +729,14 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 
 	*pErrorCode = 0;
 	*pErrorLine = 0;
-	return result;
+	return std::move( result );
 
 err:
 	*pErrorCode = errorCode;
 	*pErrorLine = dwLineCount;
 
 	result.clear();
-	return result;
+	return std::move( result );
 }
 
 // コンパイルフェーズ３：最適化
@@ -715,7 +749,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase3( std::vector<TOKEN> t
 	}
 
 	std::vector<TOKEN> result;
-	TOKEN *pToken = &tokens[0], *pPrevToken = NULL;
+	TOKEN *pToken = &tokens[0], *pPrevToken = nullptr;
 	for( size_t i=tokens.size(); i>0; i--, pToken++ ) {
 		if( pPrevToken ) {
 			// 前後が同じトラックで休符ならゲート時間を混ぜる

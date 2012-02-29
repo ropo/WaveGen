@@ -16,11 +16,12 @@
 #include <algorithm>
 #include <fstream>
 
-#define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=NULL;}}
-#define SAFE_DELETE(x)	{if(x){delete(x);(x)=NULL;}}
+#define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=nullptr;}}
+#define SAFE_DELETE(x)	{if(x){delete(x);(x)=nullptr;}}
 
 #define BASE_FREQ	44100
 
+#include "CriticalBlock.h"
 #include "SoundOutputBase.h"
 #include "SoundOutputDS.h"
 #include "SoundOutputWaveFile.h"
