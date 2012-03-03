@@ -1,7 +1,16 @@
 ﻿#include "stdafx.h"
 
+EffectGen::EffectGen()
+{
+	Reset();
+	ChangeFreq( 440 );
+	ChangeType( SQUARE );
+	ChangeSquareDuty( 0.5f );
+}
+
 EffectGen::EffectGen( float freq, eTYPE type )
 {
+	Reset();
 	ChangeFreq( freq );
 	ChangeType( type );
 	ChangeSquareDuty( 0.5f );
@@ -12,11 +21,26 @@ EffectGen::~EffectGen()
 }
 void EffectGen::ChangeFreq( float freq )
 {
+	if( freq <= 0 )
+		freq = FLT_MIN;
 	m_freq = freq;
 	m_tph = BASE_FREQ / freq;
-	m_blockCount = 0;
+	while( m_blockCount >= m_tph )
+		m_blockCount -= m_tph;
 	m_sweepFreq = 0;
 }
+
+void EffectGen::ChangeFreqSweep( float fromFreq, float toFreq, float time )
+{
+	if( time <= 0 ) {
+		ChangeFreq( toFreq );
+		m_sweepFreq = 0;
+	}else{
+		ChangeFreq( fromFreq );
+		m_sweepFreq = (toFreq - fromFreq) / (BASE_FREQ * time);
+	}
+}
+
 void EffectGen::ChangeType( eTYPE type )
 {
 	m_type = type;
@@ -38,6 +62,14 @@ void EffectGen::ChangeType( eTYPE type )
 			EffectNoise( true );
 			m_fncEffect = &EffectGen::EffectNoise;
 			break;
+		case FCNOISE_S:
+			EffectNoise( true );
+			m_fncEffect = &EffectGen::EffectFcNoiseS;
+			break;
+		case FCNOISE_L:
+			EffectNoise( true );
+			m_fncEffect = &EffectGen::EffectFcNoiseL;
+			break;
 		case SILENT:
 		default:
 			m_fncEffect = &EffectGen::EffectSilent;
@@ -46,18 +78,7 @@ void EffectGen::ChangeType( eTYPE type )
 }
 void EffectGen::ChangeSquareDuty( float duty )
 {
-	m_squareDuty = MinMax( duty, FLT_EPSILON, 1.0f-FLT_EPSILON );
-}
-
-void EffectGen::ChangeFreqSweep( float fromFreq, float toFreq, float time )
-{
-	if( time <= 0 ) {
-		ChangeFreq( toFreq );
-		m_sweepFreq = 0;
-	}else{
-		ChangeFreq( fromFreq );
-		m_sweepFreq = (toFreq - fromFreq) / (BASE_FREQ * time);
-	}
+	m_squareDuty = MinMax( duty, FLT_MIN, 1.0f-FLT_EPSILON );
 }
 
 void EffectGen::Release()
@@ -66,6 +87,8 @@ void EffectGen::Release()
 void EffectGen::Reset()
 {
 	m_sweepFreq = 0;
+	m_blockCount = 0;
+	m_fcr = 0x8000;
 }
 
 void EffectGen::Effect( float *pBuffer, size_t bloackSize )
@@ -81,6 +104,8 @@ void EffectGen::Effect( float *pBuffer, size_t bloackSize )
 		if( m_sweepFreq ) {
 			m_freq += m_sweepFreq;
 			m_tph = BASE_FREQ / m_freq;
+			if( m_tph < 0 )
+				m_tph = -m_tph;
 		}
 	}
 }
@@ -119,6 +144,27 @@ float EffectGen::EffectNoise( bool isFirst )
 		m_noise = (float)((rand()%3)-1);
 
 	return m_noise;
+}
+
+// ノイズショート
+float EffectGen::EffectFcNoiseS( bool isFirst )
+{
+	if( isFirst ) {
+		m_fcr >>= 1;
+		m_fcr |= ((m_fcr^(m_fcr>>1))&1)<<15;
+	}
+	return (float)(m_fcr & 1);
+}
+
+// ノイズロング
+float EffectGen::EffectFcNoiseL( bool isFirst )
+{
+	if( isFirst ) {
+		m_fcr >>= 1;
+		m_fcr |= ((m_fcr^(m_fcr>>6))&1)<<15;
+	}
+
+	return (float)(m_fcr & 1);
 }
 
 // 無音

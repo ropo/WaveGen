@@ -24,9 +24,9 @@ void SoundEffectVolume::ChangeVolume( float volume )
 	m_volume = volume;
 }
 
-void SoundEffectVolume::Effect( float *pBuffer, size_t bloackSize )
+void SoundEffectVolume::Effect( float *pBuffer, size_t blockSize )
 {
-	for( ; bloackSize; bloackSize--, pBuffer++ ) {
+	for( ; blockSize; blockSize--, pBuffer++ ) {
 		*pBuffer *= m_volume;
 	}
 }

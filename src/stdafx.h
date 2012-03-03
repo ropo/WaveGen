@@ -33,6 +33,7 @@
 #include "EffectGen.h"
 #include "SoundEffectADSR.h"
 #include "SoundEffectVolume.h"
+#include "SoundEffectVibrato.h"
 #include "SeqInputMML.h"
 #include "AppMain.h"
 
