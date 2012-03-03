@@ -22,17 +22,33 @@ public:
 	void Stop();
 
 private:
+	typedef struct tagPARAMVIBRATO{
+		float	delayTime;
+		float	sPower;
+		float	aPower;
+		float	aTime;
+		float	dTime;
+		float	sTime;
+		float	rTime;
+		float	hz;
+	}PARAMVIBRATO;
+
 	typedef struct tagSOUNDSET {
 		tagSOUNDSET(){
 			pSoundSet = NULL;
-			pGen = NULL;
-			pADSR = NULL;
-			pVolume = NULL;
+			pGen = nullptr;
+			pADSR = nullptr;
+			pVolume = nullptr;
+			pVibrato = nullptr;
+			isVibrato = false;
 		}
 		SoundEffectSet	*pSoundSet;
 		EffectGen		*pGen;
 		SoundEffectADSR	*pADSR;
 		SoundEffectVolume *pVolume;
+		SoundEffectVibrato *pVibrato;
+		bool isVibrato;
+		PARAMVIBRATO	vibratoParam;
 	}SOUNDSET;
 
 	enum eCMD {
@@ -44,6 +60,7 @@ private:
 		,CMD_PROGRAM_CHANGE
 		,CMD_DUTY_CHANGE
 		,CMD_ADSR
+		,CMD_VIBRATO
 		,CMD_VOLUME
 	};
 	typedef struct tagTOKEN{
@@ -63,6 +80,7 @@ private:
 				BYTE	sweepNote;
 				float	sweepTime;
 			}paramNoteOn;
+			PARAMVIBRATO paramVibrato;
 		}u1;
 		DWORD		gateTick;		// ゲート時間(tick数)
 	}TOKEN;

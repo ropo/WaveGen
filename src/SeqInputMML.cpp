@@ -32,13 +32,14 @@ bool SeqInputMML::Init( SoundManager *pManager )
 		SOUNDSET ss;
 		ss.pSoundSet = new SoundEffectSet();
 		ss.pGen		 = new EffectGen( 220, EffectGen::SILENT );
-		ss.pSoundSet->Push( ss.pGen );
+		ss.pVibrato  = new SoundEffectVibrato();
+		ss.pVibrato->SetEffectGen( ss.pGen );
+		ss.pSoundSet->Push( ss.pVibrato );
 		ss.pADSR	 = new SoundEffectADSR();						// ADSR エフェクタを連結
 		ss.pSoundSet->Push( ss.pADSR );									// …をサウンドセットにつっこむ
 		ss.pVolume	 = new SoundEffectVolume();						// Volume エフェクタを連結
 		ss.pSoundSet->Push( ss.pVolume );								// …をサウンドセットにつっこむ
 		m_pManager->Push( ss.pSoundSet );
-
 		m_holder[i] = ss;
 	}
 
@@ -51,7 +52,7 @@ bool SeqInputMML::Init( SoundManager *pManager )
 float SeqInputMML::GetFreq( BYTE note ) const
 {
 	double freq = 28160;
-	double equalTempera = pow( 2, 1./12. );
+	const double equalTempera = pow( 2, 1./12. );
 	for( int i=129-(note&0x7f); i; i-- )
 		freq /= equalTempera;
 	return (float)freq;
@@ -72,13 +73,24 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 
 	switch( token.command )
 	{
-		case CMD_NOTE_ON:
-					if( token.u1.paramNoteOn.sweepTime > 0 )
-						pSS->pGen->ChangeFreqSweep( GetFreq( token.u1.paramNoteOn.note ), GetFreq( token.u1.paramNoteOn.sweepNote ), token.u1.paramNoteOn.sweepTime );
-					else
-						pSS->pGen->ChangeFreq( GetFreq( token.u1.paramNoteOn.note ) );
+		case CMD_VIBRATO:{
+					pSS->isVibrato = true;
+					pSS->vibratoParam = token.u1.paramVibrato;
+				}break;
+		case CMD_NOTE_ON:{
+					float freq = GetFreq( token.u1.paramNoteOn.note );
+					if( token.u1.paramNoteOn.sweepTime > 0 ){
+						pSS->pGen->ChangeFreqSweep( freq, GetFreq( token.u1.paramNoteOn.sweepNote ), token.u1.paramNoteOn.sweepTime );
+					}else if( pSS->isVibrato ){
+						pSS->pVibrato->ChangeParam( freq, pSS->vibratoParam.delayTime	, pSS->vibratoParam.sPower
+														, pSS->vibratoParam.hz			, pSS->vibratoParam.aPower
+														, pSS->vibratoParam.aTime		, pSS->vibratoParam.dTime
+														, pSS->vibratoParam.sTime		, pSS->vibratoParam.rTime );
+					}else{
+						pSS->pGen->ChangeFreq( freq );
+					}
 					pSS->pADSR->NoteOn();
-				break;
+				}break;
 		case CMD_NOTE_OFF:
 					pSS->pADSR->NoteOff();
 				break;
@@ -91,6 +103,8 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 						case 2:	pg = EffectGen::SAW;		break;
 						case 3:	pg = EffectGen::SINEWAVE;	break;
 						case 4:	pg = EffectGen::NOISE;		break;
+						case 5:	pg = EffectGen::FCNOISE_S;	break;
+						case 6:	pg = EffectGen::FCNOISE_L;	break;
 					}
 					pSS->pGen->ChangeType( pg );
 				}break;
@@ -464,6 +478,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 	bool	isSweep = false;
 	DWORD	dwLineCount = 1;
 	int		errorCode = 0;
+	size_t	emptyTrackCount = 0;
 
 	// 省略可能な値をすべて設定しておく
 	int		currentOctave = 5;
@@ -484,6 +499,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 		token.gateTick = 0;
 		trackWork[i].tokens.push_back( token );
 	}
+	emptyTrackCount = trackWork[0].tokens.size();
 
 	// テンポは
 	pTokens = &trackWork[ currentTrack ].tokens;
@@ -507,7 +523,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 		if( wcsncmp( pSource, L"adsr(", 5 ) == 0 ) {
 			std::vector<std::wstring> params = GetParams( pSource+5, &pSource );
 			if( params.size() != 5 )
-				ERR(1)	// 引数の数が不正
+				ERR(1)	// ADSR引数の数が不正
 			token.command = CMD_ADSR;
 			token.gateTick = 0;
 			token.u1.paramADSR.aPower = (float)_wtof( params[0].c_str() );
@@ -515,6 +531,39 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 			token.u1.paramADSR.dTime  = (float)_wtof( params[2].c_str() );
 			token.u1.paramADSR.sPower = (float)_wtof( params[3].c_str() );
 			token.u1.paramADSR.rTime  = (float)_wtof( params[4].c_str() );
+			pTokens->push_back( token );
+			continue;
+		}
+
+		// Vibratoエフェクト指定？
+		if( wcsncmp( pSource, L"vibrato(", 8 ) == 0 ) {
+			std::vector<std::wstring> params = GetParams( pSource+8, &pSource );
+			if( params.size() != 8 ) 
+					ERR(20)	// VIBRATO引数の数が不正
+			token.command = CMD_VIBRATO;
+			token.gateTick = 0;
+			token.u1.paramVibrato.delayTime	= (float)_wtof( params[0].c_str() );
+			token.u1.paramVibrato.hz		= (float)_wtof( params[1].c_str() );
+			token.u1.paramVibrato.aPower	= (float)_wtof( params[2].c_str() );
+			token.u1.paramVibrato.aTime		= (float)_wtof( params[3].c_str() );
+			token.u1.paramVibrato.dTime		= (float)_wtof( params[4].c_str() );
+			token.u1.paramVibrato.sPower	= (float)_wtof( params[5].c_str() );
+			token.u1.paramVibrato.sTime		= (float)_wtof( params[6].c_str() );
+			token.u1.paramVibrato.rTime		= (float)_wtof( params[7].c_str() );
+
+			// hz が 0 もしくは Time がすべて 0 なら解除
+			if( token.u1.paramVibrato.hz == 0 || (token.u1.paramVibrato.aTime == 0 && token.u1.paramVibrato.dTime == 0 && token.u1.paramVibrato.sTime == 0 && token.u1.paramVibrato.rTime == 0 ) )
+			{
+				token.u1.paramVibrato.delayTime	= 0;
+				token.u1.paramVibrato.hz		= 0;
+				token.u1.paramVibrato.aPower	= 0;
+				token.u1.paramVibrato.aTime		= 0;
+				token.u1.paramVibrato.dTime		= 0;
+				token.u1.paramVibrato.sPower	= 0;
+				token.u1.paramVibrato.sTime		= 0;
+				token.u1.paramVibrato.rTime		= 0;
+			}
+
 			pTokens->push_back( token );
 			continue;
 		}
@@ -602,6 +651,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 									// 長さを混ぜる
 									gateTime = pOn->gateTick;
 									pOn->gateTick  = gateTime * noteOnGate / 100;
+									pOn->u1.paramNoteOn.sweepTime = pOn->gateTick / (float)TICKCOUNT;
 									pOff->gateTick = gateTime - pOn->gateTick;
 
 									if( pOn->u1.paramNoteOn.note != note ) {
@@ -695,12 +745,14 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 	DWORD tokenIndex = 0;
 	for( BYTE i=0; i<MAX_TRACK; i++ ) {
 		DWORD dwTotalTime = 0;
-		for( std::vector<tagTOKENWORK>::iterator itr=trackWork[i].tokens.begin(); itr!=trackWork[i].tokens.end(); ++itr ) {
-			itr->startTick = dwTotalTime;
-			itr->track = i;
-			itr->index = tokenIndex++;
-			dwTotalTime += itr->gateTick;
-			resultTokens.push_back( *itr );
+		if( trackWork[i].tokens.size() > emptyTrackCount ) {
+			for( std::vector<tagTOKENWORK>::iterator itr=trackWork[i].tokens.begin(); itr!=trackWork[i].tokens.end(); ++itr ) {
+				itr->startTick = dwTotalTime;
+				itr->track = i;
+				itr->index = tokenIndex++;
+				dwTotalTime += itr->gateTick;
+				resultTokens.push_back( *itr );
+			}
 		}
 	}
 
@@ -747,7 +799,6 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase3( std::vector<TOKEN> t
 		dummyToken.command = (eCMD)-1;
 		tokens.push_back( dummyToken );
 	}
-
 	std::vector<TOKEN> result;
 	TOKEN *pToken = &tokens[0], *pPrevToken = nullptr;
 	for( size_t i=tokens.size(); i>0; i--, pToken++ ) {
@@ -794,6 +845,7 @@ const wchar_t* SeqInputMML::GetErrorString( int errorCode )
 		case 17:return L"始まりのないパラメータブロック終端がある( ) )";
 		case 18:return L"パラメータブロック( ( )が閉じられていない";
 		case 19:return L"不明な命令があります";
+		case 20:return L"VIBRATOの引数が無効";
 	}
 	return L"不明なエラー";
 }

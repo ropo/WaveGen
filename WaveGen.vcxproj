@@ -88,6 +88,7 @@
     <ClCompile Include="src\SoundEffectADSR.cpp" />
     <ClCompile Include="src\SoundEffectBase.cpp" />
     <ClCompile Include="src\SoundEffectSet.cpp" />
+    <ClCompile Include="src\SoundEffectVibrato.cpp" />
     <ClCompile Include="src\SoundEffectVolume.cpp" />
     <ClCompile Include="src\SoundManager.cpp" />
     <ClCompile Include="src\SoundOutputDS.cpp" />
@@ -108,6 +109,7 @@
     <ClInclude Include="src\SoundEffectADSR.h" />
     <ClInclude Include="src\SoundEffectBase.h" />
     <ClInclude Include="src\SoundEffectSet.h" />
+    <ClInclude Include="src\SoundEffectVibrato.h" />
     <ClInclude Include="src\SoundEffectVolume.h" />
     <ClInclude Include="src\SoundManager.h" />
     <ClInclude Include="src\SoundOutputDS.h" />
