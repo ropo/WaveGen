@@ -1,5 +1,9 @@
 ﻿#include "stdafx.h"
 
+#define	FC_NOISE_SFT	10
+#define FC_NOISE_SEC	(1789773 << FC_NOISE_SFT)
+#define FC_NOISE_DLT	(FC_NOISE_SEC/BASE_FREQ)
+
 EffectGen::EffectGen()
 {
 	Reset();
@@ -58,17 +62,13 @@ void EffectGen::ChangeType( eTYPE type )
 		case SINEWAVE:
 			m_fncEffect = &EffectGen::EffectSinewave;
 			break;
-		case NOISE:
-			EffectNoise( true );
-			m_fncEffect = &EffectGen::EffectNoise;
+		case FCNOISE_L:
+			m_fncEffect = &EffectGen::EffectFcNoise;
+			m_fcls = 1;
 			break;
 		case FCNOISE_S:
-			EffectNoise( true );
-			m_fncEffect = &EffectGen::EffectFcNoiseS;
-			break;
-		case FCNOISE_L:
-			EffectNoise( true );
-			m_fncEffect = &EffectGen::EffectFcNoiseL;
+			m_fncEffect = &EffectGen::EffectFcNoise;
+			m_fcls = 6;
 			break;
 		case SILENT:
 		default:
@@ -76,6 +76,18 @@ void EffectGen::ChangeType( eTYPE type )
 			break;
 	}
 }
+
+// FCノイズ用周波数切り替え
+void EffectGen::ChangeFCNoiseFreq( BYTE note )
+{
+	static const int tbl[16]={
+		 0x004, 0x008, 0x010, 0x020, 0x040, 0x060, 0x080, 0x0a0
+		,0x0ca, 0x0fe, 0x17c, 0x1fc, 0x2fa, 0x3f8, 0x7f2, 0xfe4
+	};
+	m_fcnoiseWaitCount = m_fcnoiseWait = tbl[ 0x0f-(note&0x0f) ] << FC_NOISE_SFT;
+}
+
+
 void EffectGen::ChangeSquareDuty( float duty )
 {
 	m_squareDuty = MinMax( duty, FLT_MIN, 1.0f-FLT_EPSILON );
@@ -89,6 +101,9 @@ void EffectGen::Reset()
 	m_sweepFreq = 0;
 	m_blockCount = 0;
 	m_fcr = 0x8000;
+	m_fcls = 6;
+	m_noise = 0;
+	ChangeFCNoiseFreq( 0x08 );
 }
 
 void EffectGen::Effect( float *pBuffer, size_t bloackSize )
@@ -137,34 +152,34 @@ float EffectGen::EffectSinewave( bool )
 	return sin( CalcLiner( 0, m_tph, m_blockCount ) * 3.141592f * 2.0f );
 }
 
-// ノイズ
-float EffectGen::EffectNoise( bool isFirst )
+int EffectGen::GetFcRandomTick()
 {
-	if( isFirst )
-		m_noise = (float)((rand()%3)-1);
-
-	return m_noise;
+    m_fcr >>= 1;
+	m_fcr |= ((m_fcr^(m_fcr>>m_fcls))&1)<<15;
+	return (m_fcr&1)?1:-1;
 }
 
-// ノイズショート
-float EffectGen::EffectFcNoiseS( bool isFirst )
+// FCノイズ
+float EffectGen::EffectFcNoise( bool )
 {
-	if( isFirst ) {
-		m_fcr >>= 1;
-		m_fcr |= ((m_fcr^(m_fcr>>1))&1)<<15;
-	}
-	return (float)(m_fcr & 1);
-}
+	int total = 0;
+	int count = 0;
+	int delta = FC_NOISE_DLT;
+    while( delta >= m_fcnoiseWaitCount ) {
+        delta -= m_fcnoiseWaitCount;
+        m_fcnoiseWait = 0;
+		total += GetFcRandomTick();
+        count++;
+    }
+    if (count > 0)
+        m_noise = total/(float)count;
+    m_fcnoiseWait += delta;
+    if (m_fcnoiseWait >= m_fcnoiseWaitCount) {
+        m_fcnoiseWait -= m_fcnoiseWaitCount;
+		m_noise = (float)GetFcRandomTick();
+    }
 
-// ノイズロング
-float EffectGen::EffectFcNoiseL( bool isFirst )
-{
-	if( isFirst ) {
-		m_fcr >>= 1;
-		m_fcr |= ((m_fcr^(m_fcr>>6))&1)<<15;
-	}
-
-	return (float)(m_fcr & 1);
+    return m_noise;
 }
 
 // 無音
