@@ -137,7 +137,7 @@ namespace WaveGenEditor
 
         private void cmdOpenMMLref_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start("https://github.com/ropo/WaveGen/wiki/SeqInputMML");
+            System.Diagnostics.Process.Start("https://github.com/ropo/WaveGen/wiki/MML");
         }
 
         /// <summary>

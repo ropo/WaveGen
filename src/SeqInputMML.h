@@ -49,6 +49,7 @@ private:
 		SoundEffectVibrato *pVibrato;
 		bool isVibrato;
 		PARAMVIBRATO	vibratoParam;
+		EffectGen::eTYPE programNo;
 	}SOUNDSET;
 
 	enum eCMD {

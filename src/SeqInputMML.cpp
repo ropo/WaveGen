@@ -78,16 +78,20 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 					pSS->vibratoParam = token.u1.paramVibrato;
 				}break;
 		case CMD_NOTE_ON:{
-					float freq = GetFreq( token.u1.paramNoteOn.note );
-					if( token.u1.paramNoteOn.sweepTime > 0 ){
-						pSS->pGen->ChangeFreqSweep( freq, GetFreq( token.u1.paramNoteOn.sweepNote ), token.u1.paramNoteOn.sweepTime );
-					}else if( pSS->isVibrato ){
-						pSS->pVibrato->ChangeParam( freq, pSS->vibratoParam.delayTime	, pSS->vibratoParam.sPower
-														, pSS->vibratoParam.hz			, pSS->vibratoParam.aPower
-														, pSS->vibratoParam.aTime		, pSS->vibratoParam.dTime
-														, pSS->vibratoParam.sTime		, pSS->vibratoParam.rTime );
+					if( pSS->programNo == EffectGen::FCNOISE_S || pSS->programNo == EffectGen::FCNOISE_L ) {
+						pSS->pGen->ChangeFCNoiseFreq( token.u1.paramNoteOn.note );
 					}else{
-						pSS->pGen->ChangeFreq( freq );
+						float freq = GetFreq( token.u1.paramNoteOn.note );
+						if( token.u1.paramNoteOn.sweepTime > 0 ){
+							pSS->pGen->ChangeFreqSweep( freq, GetFreq( token.u1.paramNoteOn.sweepNote ), token.u1.paramNoteOn.sweepTime );
+						}else if( pSS->isVibrato ){
+							pSS->pVibrato->ChangeParam( freq, pSS->vibratoParam.delayTime	, pSS->vibratoParam.sPower
+															, pSS->vibratoParam.hz			, pSS->vibratoParam.aPower
+															, pSS->vibratoParam.aTime		, pSS->vibratoParam.dTime
+															, pSS->vibratoParam.sTime		, pSS->vibratoParam.rTime );
+						}else{
+							pSS->pGen->ChangeFreq( freq );
+						}
 					}
 					pSS->pADSR->NoteOn();
 				}break;
@@ -102,11 +106,11 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 						case 1:	pg = EffectGen::TRIANGLE;	break;
 						case 2:	pg = EffectGen::SAW;		break;
 						case 3:	pg = EffectGen::SINEWAVE;	break;
-						case 4:	pg = EffectGen::NOISE;		break;
+						case 4:	pg = EffectGen::FCNOISE_L;	break;
 						case 5:	pg = EffectGen::FCNOISE_S;	break;
-						case 6:	pg = EffectGen::FCNOISE_L;	break;
 					}
 					pSS->pGen->ChangeType( pg );
+					pSS->programNo = pg;
 				}break;
 		case CMD_DUTY_CHANGE: {
 					pSS->pGen->ChangeSquareDuty( token.param / 1000.0f );
