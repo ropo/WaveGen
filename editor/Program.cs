@@ -88,6 +88,34 @@ namespace WaveGenEditor
             DllStop(hHandle);
         }
 
+        public void PreviewNoteOn(byte note)
+        {
+            if (hHandle == IntPtr.Zero)
+                return;
+            DllPreviewNoteOn(hHandle, note);
+        }
+
+        public void PreviewNoteOff()
+        {
+            if (hHandle == IntPtr.Zero)
+                return;
+            DllPreviewNoteOff(hHandle);
+        }
+
+        public void PreviewGenType(byte type)
+        {
+            if (hHandle == IntPtr.Zero)
+                return;
+            DllPreviewGenType(hHandle, type);
+        }
+
+        public void PreviewADSR(float aPower, float aTime, float dTime, float sPower, float rTime )
+        {
+            if (hHandle == IntPtr.Zero)
+                return;
+            DllPreviewSetADSR(hHandle, aPower, aTime, dTime, sPower, rTime );
+        }
+        
         public delegate void delegatePlayFinished(WaveGenIF wg, object pParam);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void callbackPlayFinished(IntPtr pParam);
@@ -138,6 +166,14 @@ namespace WaveGenEditor
         [DllImport(DLLNAME, EntryPoint = "Stop")]
         private extern static void DllStop(IntPtr hInterface);
         [DllImport(DLLNAME, EntryPoint = "SetWaveFileName", CharSet = CharSet.Unicode)]
-        private extern static void DllSetWaveFileName( IntPtr hInterface, String fileName );
+        private extern static void DllSetWaveFileName(IntPtr hInterface, String fileName);
+        [DllImport(DLLNAME, EntryPoint = "PreviewNoteOn")]
+        private extern static void DllPreviewNoteOn(IntPtr hInterface, byte note);
+        [DllImport(DLLNAME, EntryPoint = "PreviewNoteOff")]
+        private extern static void DllPreviewNoteOff(IntPtr hInterface);
+        [DllImport(DLLNAME, EntryPoint = "PreviewGenType")]
+        private extern static void DllPreviewGenType(IntPtr hInterface, byte type);
+        [DllImport(DLLNAME, EntryPoint = "PreviewSetADSR")]
+        private extern static void DllPreviewSetADSR(IntPtr hInterface, float aPower, float aTime, float dTime, float sPower, float rTime);
     }
 }

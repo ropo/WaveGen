@@ -9,6 +9,8 @@
 #include <dsound.h> 
 #pragma comment ( lib, "dsound.lib" )
 
+#pragma warning(disable:4480)
+
 #include <vector>
 #include <stack>
 #include <string>

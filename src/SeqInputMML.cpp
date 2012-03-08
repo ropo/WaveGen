@@ -49,7 +49,7 @@ bool SeqInputMML::Init( SoundManager *pManager )
 }
 
 // 指定ノート番号の周波者数を取得
-float SeqInputMML::GetFreq( BYTE note ) const
+float SeqInputMML::GetFreq( BYTE note )
 {
 	double freq = 28160;
 	const double equalTempera = pow( 2, 1./12. );

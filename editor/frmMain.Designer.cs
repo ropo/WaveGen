@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.stsBar = new System.Windows.Forms.StatusStrip();
             this.stsNotify = new System.Windows.Forms.ToolStripStatusLabel();
             this.cmnOpenDlg = new System.Windows.Forms.OpenFileDialog();
@@ -36,8 +37,13 @@
             this.cmdOpenFile = new System.Windows.Forms.ToolStripMenuItem();
             this.cmdSaveFile = new System.Windows.Forms.ToolStripMenuItem();
             this.cmdSaveAsFile = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
+            this.cmdWriteWaveFile = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.cmdAppExit = new System.Windows.Forms.ToolStripMenuItem();
+            this.cmdParamEdit = new System.Windows.Forms.ToolStripMenuItem();
+            this.cmdADSRParamEdit = new System.Windows.Forms.ToolStripMenuItem();
+            this.cmdFMParamEdit = new System.Windows.Forms.ToolStripMenuItem();
             this.cmdOpenWeb = new System.Windows.Forms.ToolStripMenuItem();
             this.cmdOpenGithub = new System.Windows.Forms.ToolStripMenuItem();
             this.cmdOpenDL = new System.Windows.Forms.ToolStripMenuItem();
@@ -45,29 +51,35 @@
             this.cmdOpenMMLref = new System.Windows.Forms.ToolStripMenuItem();
             this.cmnSaveDlg = new System.Windows.Forms.SaveFileDialog();
             this.rchMML = new System.Windows.Forms.RichTextBox();
+            this.ctmEdit = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.cmdEditCopy = new System.Windows.Forms.ToolStripMenuItem();
+            this.cmdEditPaste = new System.Windows.Forms.ToolStripMenuItem();
+            this.cmdEditCut = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.cmdMenuPlay = new System.Windows.Forms.ToolStripMenuItem();
             this.cmdPlay = new System.Windows.Forms.CheckBox();
             this.chkAutoSave = new System.Windows.Forms.CheckBox();
-            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
-            this.cmdWriteWaveFile = new System.Windows.Forms.ToolStripMenuItem();
             this.cmnWavSaveDlg = new System.Windows.Forms.SaveFileDialog();
+            this.keyPreview = new WaveGenEditor.KeybordControl();
             this.stsBar.SuspendLayout();
             this.menuMain.SuspendLayout();
+            this.ctmEdit.SuspendLayout();
             this.SuspendLayout();
             // 
             // stsBar
             // 
             this.stsBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.stsNotify});
-            this.stsBar.Location = new System.Drawing.Point(0, 489);
+            this.stsBar.Location = new System.Drawing.Point(0, 435);
             this.stsBar.Name = "stsBar";
-            this.stsBar.Size = new System.Drawing.Size(768, 22);
+            this.stsBar.Size = new System.Drawing.Size(574, 22);
             this.stsBar.TabIndex = 2;
             this.stsBar.Text = "statusStrip1";
             // 
             // stsNotify
             // 
             this.stsNotify.Name = "stsNotify";
-            this.stsNotify.Size = new System.Drawing.Size(753, 17);
+            this.stsNotify.Size = new System.Drawing.Size(559, 17);
             this.stsNotify.Spring = true;
             this.stsNotify.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -79,10 +91,11 @@
             // 
             this.menuMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cmdFile,
+            this.cmdParamEdit,
             this.cmdOpenWeb});
             this.menuMain.Location = new System.Drawing.Point(0, 0);
             this.menuMain.Name = "menuMain";
-            this.menuMain.Size = new System.Drawing.Size(768, 26);
+            this.menuMain.Size = new System.Drawing.Size(574, 26);
             this.menuMain.TabIndex = 4;
             this.menuMain.Text = "menuStrip1";
             // 
@@ -128,6 +141,21 @@
             this.cmdSaveAsFile.Text = "名前を付けて保存(&A)...";
             this.cmdSaveAsFile.Click += new System.EventHandler(this.cmdSaveAsFile_Click);
             // 
+            // toolStripMenuItem3
+            // 
+            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(371, 6);
+            // 
+            // cmdWriteWaveFile
+            // 
+            this.cmdWriteWaveFile.Name = "cmdWriteWaveFile";
+            this.cmdWriteWaveFile.ShortcutKeyDisplayString = "Ctrl+Shift+W";
+            this.cmdWriteWaveFile.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
+            | System.Windows.Forms.Keys.W)));
+            this.cmdWriteWaveFile.Size = new System.Drawing.Size(374, 22);
+            this.cmdWriteWaveFile.Text = "Waveファイルにレコーディング(&W)...";
+            this.cmdWriteWaveFile.Click += new System.EventHandler(this.cmdWriteWaveFile_Click);
+            // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
@@ -141,6 +169,29 @@
             this.cmdAppExit.Size = new System.Drawing.Size(374, 22);
             this.cmdAppExit.Text = "終了(&X)";
             this.cmdAppExit.Click += new System.EventHandler(this.cmdAppExit_Click);
+            // 
+            // cmdParamEdit
+            // 
+            this.cmdParamEdit.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.cmdADSRParamEdit,
+            this.cmdFMParamEdit});
+            this.cmdParamEdit.Name = "cmdParamEdit";
+            this.cmdParamEdit.Size = new System.Drawing.Size(145, 22);
+            this.cmdParamEdit.Text = "パラメータエディタ(&P)";
+            // 
+            // cmdADSRParamEdit
+            // 
+            this.cmdADSRParamEdit.Name = "cmdADSRParamEdit";
+            this.cmdADSRParamEdit.Size = new System.Drawing.Size(109, 22);
+            this.cmdADSRParamEdit.Text = "ADSR";
+            this.cmdADSRParamEdit.Click += new System.EventHandler(this.cmdADSRParamEdit_Click);
+            // 
+            // cmdFMParamEdit
+            // 
+            this.cmdFMParamEdit.Name = "cmdFMParamEdit";
+            this.cmdFMParamEdit.Size = new System.Drawing.Size(109, 22);
+            this.cmdFMParamEdit.Text = "FM";
+            this.cmdFMParamEdit.Visible = false;
             // 
             // cmdOpenWeb
             // 
@@ -191,19 +242,68 @@
             this.rchMML.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.rchMML.Location = new System.Drawing.Point(0, 57);
+            this.rchMML.ContextMenuStrip = this.ctmEdit;
+            this.rchMML.Location = new System.Drawing.Point(0, 74);
             this.rchMML.Name = "rchMML";
             this.rchMML.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedBoth;
-            this.rchMML.Size = new System.Drawing.Size(768, 429);
+            this.rchMML.Size = new System.Drawing.Size(574, 358);
             this.rchMML.TabIndex = 0;
             this.rchMML.Text = "t128\n\nTrack(0)\n@0 v100 l8 q90 o4  ADSR( 1, 0.01, 0, 1, 0.01 )\n";
+            // 
+            // ctmEdit
+            // 
+            this.ctmEdit.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.cmdEditCopy,
+            this.cmdEditPaste,
+            this.cmdEditCut,
+            this.toolStripSeparator1,
+            this.cmdMenuPlay});
+            this.ctmEdit.Name = "ctmEdit";
+            this.ctmEdit.Size = new System.Drawing.Size(189, 98);
+            // 
+            // cmdEditCopy
+            // 
+            this.cmdEditCopy.Name = "cmdEditCopy";
+            this.cmdEditCopy.ShortcutKeyDisplayString = "Ctrl+C";
+            this.cmdEditCopy.Size = new System.Drawing.Size(188, 22);
+            this.cmdEditCopy.Text = "コピー(&C)";
+            this.cmdEditCopy.Click += new System.EventHandler(this.cmdEditCopy_Click);
+            // 
+            // cmdEditPaste
+            // 
+            this.cmdEditPaste.Name = "cmdEditPaste";
+            this.cmdEditPaste.ShortcutKeyDisplayString = "Ctrl+V";
+            this.cmdEditPaste.Size = new System.Drawing.Size(188, 22);
+            this.cmdEditPaste.Text = "ペースト(&P)";
+            this.cmdEditPaste.Click += new System.EventHandler(this.cmdEditPaste_Click);
+            // 
+            // cmdEditCut
+            // 
+            this.cmdEditCut.Name = "cmdEditCut";
+            this.cmdEditCut.ShortcutKeyDisplayString = "Ctrl+X";
+            this.cmdEditCut.Size = new System.Drawing.Size(188, 22);
+            this.cmdEditCut.Text = "カット(&C)";
+            this.cmdEditCut.Click += new System.EventHandler(this.cmdEditCut_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(185, 6);
+            // 
+            // cmdMenuPlay
+            // 
+            this.cmdMenuPlay.Name = "cmdMenuPlay";
+            this.cmdMenuPlay.ShortcutKeyDisplayString = "F5";
+            this.cmdMenuPlay.Size = new System.Drawing.Size(188, 22);
+            this.cmdMenuPlay.Text = "再生・停止";
+            this.cmdMenuPlay.Click += new System.EventHandler(this.cmdMenuPlay_Click);
             // 
             // cmdPlay
             // 
             this.cmdPlay.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdPlay.Appearance = System.Windows.Forms.Appearance.Button;
             this.cmdPlay.AutoSize = true;
-            this.cmdPlay.Location = new System.Drawing.Point(692, 29);
+            this.cmdPlay.Location = new System.Drawing.Point(498, 29);
             this.cmdPlay.Name = "cmdPlay";
             this.cmdPlay.Size = new System.Drawing.Size(64, 22);
             this.cmdPlay.TabIndex = 2;
@@ -215,37 +315,37 @@
             // 
             this.chkAutoSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.chkAutoSave.AutoSize = true;
-            this.chkAutoSave.Location = new System.Drawing.Point(569, 33);
+            this.chkAutoSave.Location = new System.Drawing.Point(375, 33);
             this.chkAutoSave.Name = "chkAutoSave";
             this.chkAutoSave.Size = new System.Drawing.Size(117, 16);
             this.chkAutoSave.TabIndex = 1;
             this.chkAutoSave.Text = "再生時に自動保存";
             this.chkAutoSave.UseVisualStyleBackColor = true;
             // 
-            // toolStripMenuItem3
-            // 
-            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(371, 6);
-            // 
-            // cmdWriteWaveFile
-            // 
-            this.cmdWriteWaveFile.Name = "cmdWriteWaveFile";
-            this.cmdWriteWaveFile.ShortcutKeyDisplayString = "Ctrl+Shift+W";
-            this.cmdWriteWaveFile.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
-            | System.Windows.Forms.Keys.W)));
-            this.cmdWriteWaveFile.Size = new System.Drawing.Size(374, 22);
-            this.cmdWriteWaveFile.Text = "Waveファイルにレコーディング(&W)...";
-            this.cmdWriteWaveFile.Click += new System.EventHandler(this.cmdWriteWaveFile_Click);
-            // 
             // cmnWavSaveDlg
             // 
             this.cmnWavSaveDlg.Filter = "WAVEファイル|*.wav|すべてのファイル|*.*";
+            // 
+            // keyPreview
+            // 
+            this.keyPreview.BackColor = System.Drawing.Color.White;
+            this.keyPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.keyPreview.KeysCount = ((byte)(88));
+            this.keyPreview.Location = new System.Drawing.Point(12, 33);
+            this.keyPreview.Name = "keyPreview";
+            this.keyPreview.Size = new System.Drawing.Size(357, 35);
+            this.keyPreview.TabIndex = 5;
+            this.keyPreview.TabStop = false;
+            this.keyPreview.EventNoteOn += new WaveGenEditor.KeybordControl.EventHandlerNoteOnOff(this.keyPreview_EventNoteOn);
+            this.keyPreview.EventNoteOff += new WaveGenEditor.KeybordControl.EventHandlerNoteOnOff(this.keyPreview_EventNoteOff);
+            this.keyPreview.EventChangeType += new WaveGenEditor.KeybordControl.EventHandlerChangeType(this.keyPreview_EventChangeType);
             // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(768, 511);
+            this.ClientSize = new System.Drawing.Size(574, 457);
+            this.Controls.Add(this.keyPreview);
             this.Controls.Add(this.chkAutoSave);
             this.Controls.Add(this.cmdPlay);
             this.Controls.Add(this.rchMML);
@@ -253,6 +353,7 @@
             this.Controls.Add(this.menuMain);
             this.DoubleBuffered = true;
             this.MainMenuStrip = this.menuMain;
+            this.MinimumSize = new System.Drawing.Size(388, 329);
             this.Name = "frmMain";
             this.Text = "WaveGenEditor";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMain_FormClosing);
@@ -261,6 +362,7 @@
             this.stsBar.PerformLayout();
             this.menuMain.ResumeLayout(false);
             this.menuMain.PerformLayout();
+            this.ctmEdit.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -290,6 +392,16 @@
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem3;
         private System.Windows.Forms.ToolStripMenuItem cmdWriteWaveFile;
         private System.Windows.Forms.SaveFileDialog cmnWavSaveDlg;
+        private System.Windows.Forms.ToolStripMenuItem cmdParamEdit;
+        private System.Windows.Forms.ToolStripMenuItem cmdADSRParamEdit;
+        private System.Windows.Forms.ToolStripMenuItem cmdFMParamEdit;
+        private System.Windows.Forms.ContextMenuStrip ctmEdit;
+        private System.Windows.Forms.ToolStripMenuItem cmdEditCopy;
+        private System.Windows.Forms.ToolStripMenuItem cmdEditPaste;
+        private System.Windows.Forms.ToolStripMenuItem cmdEditCut;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem cmdMenuPlay;
+        private KeybordControl keyPreview;
     }
 }
 

@@ -69,16 +69,34 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="frmADSRParam.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmADSRParam.Designer.cs">
+      <DependentUpon>frmADSRParam.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmMain.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="frmMain.Designer.cs">
       <DependentUpon>frmMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="KeybordControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="KeybordControl.Designer.cs">
+      <DependentUpon>KeybordControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="frmADSRParam.resx">
+      <DependentUpon>frmADSRParam.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmMain.resx">
       <DependentUpon>frmMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="KeybordControl.resx">
+      <DependentUpon>KeybordControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

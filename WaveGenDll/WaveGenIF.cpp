@@ -8,6 +8,11 @@ typedef struct tagWAVEGENIF{
 	SeqInputMML		*pInputMML;
 	SoundOutputBase	*pOutputBase;
 	std::wstring	waveFile;
+	SoundEffectSet	*pPreviewSet;
+	EffectGen		*pPrevireGen;
+	SoundEffectADSR	*pPreviewADSR;
+	SoundEffectVolume *pPreviewVolume;
+	EffectGen::eTYPE previewGenType;
 }WAVEGENIF;
 
 SoundOutputDS* CreateOutputDS( HWND hWnd )
@@ -43,6 +48,18 @@ WAVEGENDLL_API HANDLE WINAPI CreateWaveGen(HWND hWnd)
 	// マネージャにI/O登録
 	pHandler->pManager->ChangeInput( pHandler->pInputMML );
 	pHandler->pManager->ChangeOutput( pHandler->pOutputBase );
+
+	// プレビュー作成
+	pHandler->previewGenType = EffectGen::SQUARE;
+	pHandler->pPreviewSet = new SoundEffectSet();
+	pHandler->pPrevireGen = new EffectGen();
+	pHandler->pPreviewADSR = new SoundEffectADSR();
+	pHandler->pPreviewVolume = new SoundEffectVolume();
+	pHandler->pPreviewVolume->ChangeVolume( 0.2f );
+	pHandler->pPreviewSet->Push( pHandler->pPrevireGen );
+	pHandler->pPreviewSet->Push( pHandler->pPreviewADSR );
+	pHandler->pPreviewSet->Push( pHandler->pPreviewVolume );
+	pHandler->pManager->Push( pHandler->pPreviewSet );
 	
 	return pHandler;
 }
@@ -130,3 +147,46 @@ WAVEGENDLL_API void WINAPI Stop( HANDLE hInterface )
 		pThis->pManager->ChangeOutput( pThis->pOutputBase );
 	}
 }
+
+WAVEGENDLL_API void WINAPI PreviewNoteOn( HANDLE hInterface, unsigned char note )
+{
+	if( hInterface == NULL )
+		return;
+
+	WAVEGENIF *pThis = (WAVEGENIF*)hInterface;
+	if( pThis->previewGenType == EffectGen::FCNOISE_L 
+	 || pThis->previewGenType == EffectGen::FCNOISE_S )
+		pThis->pPrevireGen->ChangeFCNoiseFreq( note );
+	else
+		pThis->pPrevireGen->ChangeFreq( SeqInputMML::GetFreq( note ) );
+	pThis->pPreviewADSR->NoteOn();
+}
+
+WAVEGENDLL_API void WINAPI PreviewNoteOff( HANDLE hInterface )
+{
+	if( hInterface == NULL )
+		return;
+
+	WAVEGENIF *pThis = (WAVEGENIF*)hInterface;
+	pThis->pPreviewADSR->NoteOff();
+}
+
+WAVEGENDLL_API void WINAPI PreviewGenType( HANDLE hInterface, EffectGen::eTYPE type )
+{
+	if( hInterface == NULL )
+		return;
+
+	WAVEGENIF *pThis = (WAVEGENIF*)hInterface;
+	pThis->previewGenType = type;
+	pThis->pPrevireGen->ChangeType( type );
+}
+
+WAVEGENDLL_API void WINAPI PreviewSetADSR( HANDLE hInterface, float aPower, float aTime, float dTime, float sPower, float rTime )
+{
+	if( hInterface == NULL )
+		return;
+
+	WAVEGENIF *pThis = (WAVEGENIF*)hInterface;
+	pThis->pPreviewADSR->ChangeParam( aPower, aTime, dTime, sPower, rTime );
+}
+

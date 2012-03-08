@@ -18,6 +18,7 @@ public:
 	COMPILEDINFO CompileMML( const wchar_t *pMML );
 	static const wchar_t* GetErrorString( int errorCode );
 	virtual bool Tick( DWORD dwTime );
+	static float GetFreq( BYTE note );
 	void Play( DWORD dwTime, void(*playFinished)(void*)=nullptr, void *pPlayFinishedParam=nullptr );
 	void Stop();
 
@@ -96,7 +97,6 @@ private:
 	std::vector<std::wstring> GetParams( const wchar_t *pSource, const wchar_t **ppExit ) const;
 	DWORD PlaySeq( DWORD index );
 	void  Release();
-	float GetFreq( BYTE note ) const;
 
 	SOUNDSET				m_holder[MAX_TRACK];
 	SoundManager			*m_pManager;

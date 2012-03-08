@@ -12,9 +12,6 @@ namespace WaveGenEditor
     /// </summary>
     public partial class frmMain : Form
     {
-        [System.Runtime.InteropServices.DllImport("User32.Dll")]
-        private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-
         private WaveGenIF waveGen = null;
         private string filePath = null;
         private bool isWaveSave = false;
@@ -239,6 +236,51 @@ namespace WaveGenEditor
             isWaveSave = true;
             cmdPlay.Checked = true;
             isWaveSave = false;
+        }
+        private void cmdADSRParamEdit_Click(object sender, EventArgs e)
+        {
+            if (cmdADSRParamEdit.Checked )
+                return;
+
+            frmADSRParam frm = new frmADSRParam();
+            frm.FormClosing += new FormClosingEventHandler( delegate{ cmdADSRParamEdit.Checked = false; } );
+            cmdADSRParamEdit.Checked = true;
+            frm.Show(this);
+        }
+        
+        private void cmdEditCopy_Click(object sender, EventArgs e)
+        {
+            rchMML.Copy();
+        }
+
+        private void cmdEditPaste_Click(object sender, EventArgs e)
+        {
+            rchMML.Paste();
+        }
+
+        private void cmdEditCut_Click(object sender, EventArgs e)
+        {
+            rchMML.Cut();
+        }
+
+        private void cmdMenuPlay_Click(object sender, EventArgs e)
+        {
+            cmdPlay.Checked = !cmdPlay.Checked;
+        }
+
+        private void keyPreview_EventNoteOff(object sender, KeybordControl.KeyNoteEventArgs e)
+        {
+            waveGen.PreviewNoteOff();
+        }
+
+        private void keyPreview_EventNoteOn(object sender, KeybordControl.KeyNoteEventArgs e)
+        {
+            waveGen.PreviewNoteOn(e.note);
+        }
+
+        private void keyPreview_EventChangeType(object sender, byte type)
+        {
+            waveGen.PreviewGenType(type);
         }
     }
 }
