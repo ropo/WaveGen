@@ -4,7 +4,7 @@
 class EffectGen : public SoundEffectBase
 {
 public:
-	enum eTYPE{
+	enum eTYPE : unsigned char {
 		 SQUARE		// 矩形波
 		,TRIANGLE	// 三角波
 		,SAW		// のこぎり波

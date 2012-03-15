@@ -1,4 +1,4 @@
-// https://github.com/ropo/WaveGen/blob/5946d2729a62656ae7da79cd209070e888a4d873/sample.mml
+// http://arc.ropo.jp/git/hub10sample2.mp3
 
 t160
 
@@ -20,12 +20,12 @@ g-4.a-2r e-1
 //---------------------------------------------------------------------
 Track(1)
 o5 l8 q90 @0 v50 r2 ADSR(1.0, 0.05, 0.05, 0.8, 0.5)
-[ c"b-ce-2rc"b-ce-4fc"b-Å@c"b-ce-2rc"b-cg4gf4 ]
+[ c"b-ce-2rc"b-ce-4fc"b- c"b-ce-2rc"b-cg4gf4 ]
 l6 c"b-c l8 e-2c"b-ce-4fc"b-c"b-ce-2rc"b-cg4gf4
-c"b-ce-2rc"b-ce-4fc"b-Å@c"b-ce-2rc"b-cg4g l32<rg-a-b->cd-e-fl8
+c"b-ce-2rc"b-ce-4fc"b- c"b-ce-2rc"b-cg4g l32<rg-a-b->cd-e-fl8
 
 e-d-e-g-4f16e-16d-4e-2e-fg-a-
-[4 b-4.b-g-b-g-fe-2r-fg-b->e-4.e-d-e-d-<a-b-2.a-4
+[4 b-4.b-g-b-g-fe-2rfg-b->e-4.e-d-e-d-<a-b-2.a-4
    g-4.g-fg-b-fa-e-ca-e-cf4 g-e-"bg-fd-"b-ff4.e-: e-fg-a- ] e-4b-4
 b-g-e-b-a-fd-a-a-4.b-g-4b-4b-g-e-b-`d-a-f>d-
 
