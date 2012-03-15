@@ -27,7 +27,6 @@
 #include "SoundOutputBase.h"
 #include "SoundOutputDS.h"
 #include "SoundOutputWaveFile.h"
-#include "WinBase.h"
 #include "SeqInputBase.h"
 #include "SoundManager.h"
 #include "SoundEffectSet.h"
@@ -37,7 +36,6 @@
 #include "SoundEffectVolume.h"
 #include "SoundEffectVibrato.h"
 #include "SeqInputMML.h"
-#include "AppMain.h"
 
 template<typename T> inline T MinMax( T v, T min, T max ) {
 	if( v > max )	return max;

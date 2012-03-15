@@ -13,7 +13,6 @@ namespace WaveGenEditor
     public partial class frmMain : Form
     {
         private WaveGenIF waveGen = null;
-        private string filePath = null;
         private bool isWaveSave = false;
 
         /// <summary>
@@ -65,7 +64,7 @@ namespace WaveGenEditor
                 return;
 
             rchMML.Text = File.ReadAllText( cmnOpenDlg.FileName, Encoding.GetEncoding("shift_jis") );
-            cmnSaveDlg.FileName = filePath = cmnOpenDlg.FileName;
+            cmnSaveDlg.FileName = cmnOpenDlg.FileName;
             stsNotify.Text = Resources.Loaded;
         }
 
@@ -76,20 +75,32 @@ namespace WaveGenEditor
         /// <param name="e"></param>
         private void cmdSaveFile_Click(object sender, EventArgs e)
         {
-            if (cmnOpenDlg.FileName.Trim() == ""){
-                cmdSaveAsFile.PerformClick();
+            if (cmnSaveDlg.FileName.Trim() == "")
+            {
+                if (DialogResult.OK != cmnSaveDlg.ShowDialog())
+                    return;
             }
+            MMLSave(cmnSaveDlg.FileName);
+        }
 
+        /// <summary>
+        /// MMLを保存
+        /// </summary>
+        /// <param name="filename">保存ファイル名</param>
+        private void MMLSave(string filename)
+        {
             try
             {
-                File.WriteAllText(cmnSaveDlg.FileName, rchMML.Text, Encoding.GetEncoding("shift_jis") );
+                File.WriteAllText(filename, rchMML.Text, Encoding.GetEncoding("shift_jis"));
                 stsNotify.Text = Resources.Saved;
+                cmnSaveDlg.FileName = cmnOpenDlg.FileName = cmnSaveDlg.FileName;
             }
             catch (Exception)
             {
             }
         }
-        
+
+
         /// <summary>
         /// [名前を付けて保存]
         /// </summary>
@@ -99,7 +110,8 @@ namespace WaveGenEditor
         {
             if (DialogResult.OK != cmnSaveDlg.ShowDialog())
                 return;
-            cmnSaveDlg.FileName = cmnOpenDlg.FileName = cmnSaveDlg.FileName;
+
+            MMLSave(cmnSaveDlg.FileName);
         }
 
         /// <summary>
