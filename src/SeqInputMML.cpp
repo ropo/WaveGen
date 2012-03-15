@@ -49,7 +49,7 @@ bool SeqInputMML::Init( SoundManager *pManager )
 }
 
 // 指定ノート番号の周波者数を取得
-float SeqInputMML::GetFreq( BYTE note ) const
+float SeqInputMML::GetFreq( BYTE note )
 {
 	double freq = 28160;
 	const double equalTempera = pow( 2, 1./12. );
@@ -230,10 +230,10 @@ DWORD SeqInputMML::GetNumber( const wchar_t *pString, const wchar_t **ppExit ) c
 	return num;
 }
 
-// 音長を取得 -1 は負数
-bool SeqInputMML::GetNote( const wchar_t *pString, DWORD defaultTick, char *pNote, DWORD *pGateTime, const wchar_t **ppExit ) const
+// 音階を取得 -1 は休符。ret:true は構文エラー
+bool SeqInputMML::GetNote( const wchar_t *pString, DWORD defaultTick, char octave, char *pNote, DWORD *pGateTime, const wchar_t **ppExit ) const
 {
-	int note = -1;
+	int note = -2;
 	if( *pString>='a' && *pString<='g' ) {
 		static const int tbl[7] = {9,11,0,2,4,5,7};
 		note = tbl[*pString-'a'];
@@ -241,22 +241,21 @@ bool SeqInputMML::GetNote( const wchar_t *pString, DWORD defaultTick, char *pNot
 		if( *pString == '+' ) {
 			note++;
 			pString++;
-			if( note == 12 )
-				note = 0;
 		} else if( *pString == '-' ) {
 			note--;
 			pString++;
-			if( note == -1 )
-				note = 11;
 		}
-		if( note < 0 || note > 11 )
-			return true;
 	}else if( *pString >= 'r' ) {
 		note = -1;
 		pString++;
 	}
+	if( note == -2 )
+		return true;
 
 	DWORD gateTime = GetNoteTick( pString, defaultTick, &pString );
+
+	if( note != -1 )
+		note += octave * 12;
 
 	if( pNote )
 		*pNote = (char)note;
@@ -634,7 +633,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 			case 'g':	case 'a':	case 'b':	case 'r':{
 						char note;
 						DWORD gateTime;
-						if( GetNote( pSource, defaultTick, &note, &gateTime, &pSource ) )
+						if( GetNote( pSource, defaultTick, (char)(onceOctave+currentOctave), &note, &gateTime, &pSource ) )
 							ERR(8)
 
 						if( note >= 0 ) {
@@ -650,25 +649,26 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 									pOff = pOn+1;
 									if( pOff->command != CMD_NOTE_OFF )
 										ERR(9)
-									pOn->gateTick += gateTime + pOff->gateTick;
 
 									// 長さを混ぜる
-									gateTime = pOn->gateTick;
+									gateTime = pOn->gateTick + gateTime + pOff->gateTick;
 									pOn->gateTick  = gateTime * noteOnGate / 100;
 									pOn->u1.paramNoteOn.sweepTime = pOn->gateTick / (float)TICKCOUNT;
 									pOff->gateTick = gateTime - pOn->gateTick;
 
 									if( pOn->u1.paramNoteOn.note != note ) {
 										// スラー
-										pOn->u1.paramNoteOn.sweepNote = (BYTE)MinMax( (onceOctave + currentOctave) * 12 + note, 0, 127 );
+										pOn->u1.paramNoteOn.sweepNote = note;
 										pOn->u1.paramNoteOn.sweepTime = pOn->gateTick / (float)TICKCOUNT;
 										if( pOn->u1.paramNoteOn.sweepNote == pOn->u1.paramNoteOn.note )
 											pOn->u1.paramNoteOn.sweepTime = 0;	// 巡り巡って起点と同じ音階ならタイになる
+									}else{
+										pOn->u1.paramNoteOn.sweepTime = 0;
 									}
 								}
 							}else{
 								token.command = CMD_NOTE_ON;
-								token.u1.paramNoteOn.note = (BYTE)MinMax( (onceOctave + currentOctave) * 12 + note, 0, 127 );
+								token.u1.paramNoteOn.note = note;
 								token.gateTick = gateTime * noteOnGate / 100;
 								token.u1.paramNoteOn.sweepTime = 0;
 								pTokens->push_back( token );
