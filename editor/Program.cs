@@ -27,6 +27,7 @@ namespace WaveGenEditor
         
         public WaveGenIF()
         {
+            cbInstancePlayFinished = cbPlayFinished;
         }
         public bool CreateWaveGen(IntPtr hWnd)
         {
@@ -57,7 +58,7 @@ namespace WaveGenEditor
                 CallbackParams info = new CallbackParams(this,parent,dlgPlayFinished);
                 int hash = this.GetHashCode();
                 callbacks[hash] = info;
-                return DllCompileMML(hHandle, mmlString, ref errorCode, ref errorLine, (byte)(isWave?1:0), cbPlayFinished, hash );
+                return DllCompileMML(hHandle, mmlString, ref errorCode, ref errorLine, (byte)(isWave?1:0), cbInstancePlayFinished, hash );
             }
         }
         public void SetWaveFileName( string fileName )
@@ -119,6 +120,7 @@ namespace WaveGenEditor
         public delegate void delegatePlayFinished(WaveGenIF wg, object pParam);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void callbackPlayFinished(IntPtr pParam);
+        private readonly callbackPlayFinished cbInstancePlayFinished;
         public class CallbackParams
         {
             public CallbackParams(WaveGenIF _this,object parent,delegatePlayFinished dlg)

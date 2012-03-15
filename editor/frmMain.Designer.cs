@@ -70,7 +70,7 @@
             // 
             this.stsBar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.stsNotify});
-            this.stsBar.Location = new System.Drawing.Point(0, 435);
+            this.stsBar.Location = new System.Drawing.Point(0, 417);
             this.stsBar.Name = "stsBar";
             this.stsBar.Size = new System.Drawing.Size(574, 22);
             this.stsBar.TabIndex = 2;
@@ -246,7 +246,7 @@
             this.rchMML.Location = new System.Drawing.Point(0, 74);
             this.rchMML.Name = "rchMML";
             this.rchMML.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedBoth;
-            this.rchMML.Size = new System.Drawing.Size(574, 358);
+            this.rchMML.Size = new System.Drawing.Size(574, 340);
             this.rchMML.TabIndex = 0;
             this.rchMML.Text = "t128\n\nTrack(0)\n@0 v100 l8 q90 o4  ADSR( 1, 0.01, 0, 1, 0.01 )\n";
             // 
@@ -344,7 +344,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(574, 457);
+            this.ClientSize = new System.Drawing.Size(574, 439);
             this.Controls.Add(this.keyPreview);
             this.Controls.Add(this.chkAutoSave);
             this.Controls.Add(this.cmdPlay);
@@ -353,7 +353,7 @@
             this.Controls.Add(this.menuMain);
             this.DoubleBuffered = true;
             this.MainMenuStrip = this.menuMain;
-            this.MinimumSize = new System.Drawing.Size(388, 329);
+            this.MinimumSize = new System.Drawing.Size(590, 329);
             this.Name = "frmMain";
             this.Text = "WaveGenEditor";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMain_FormClosing);
