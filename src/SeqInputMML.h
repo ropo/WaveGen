@@ -92,7 +92,7 @@ private:
 	std::vector<TOKEN> CompilePhase3( std::vector<TOKEN> tokens ) const;
 	DWORD GetNoteTick( const wchar_t *pNoteSize, DWORD defaultTick, const wchar_t **ppExit ) const;
 	DWORD GetNumber( const wchar_t *pString, const wchar_t **ppExit ) const;
-	bool  GetNote( const wchar_t *pString, DWORD defaultTick, char *pNote, DWORD *pGateTime, const wchar_t **ppExit ) const;
+	bool  GetNote( const wchar_t *pString, DWORD defaultTick, char octave, char *pNote, DWORD *pGateTime, const wchar_t **ppExit ) const;
 	DWORD GetTempoToTick( DWORD tempo ) const;
 	std::vector<std::wstring> GetParams( const wchar_t *pSource, const wchar_t **ppExit ) const;
 	DWORD PlaySeq( DWORD index );
