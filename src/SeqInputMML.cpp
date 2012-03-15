@@ -233,9 +233,10 @@ DWORD SeqInputMML::GetNumber( const wchar_t *pString, const wchar_t **ppExit ) c
 // 音階を取得 -1 は休符。ret:true は構文エラー
 bool SeqInputMML::GetNote( const wchar_t *pString, DWORD defaultTick, char octave, char *pNote, DWORD *pGateTime, const wchar_t **ppExit ) const
 {
-	int note = -2;
+	char note = -1;
+	bool isRest = false;
 	if( *pString>='a' && *pString<='g' ) {
-		static const int tbl[7] = {9,11,0,2,4,5,7};
+		static const char tbl[7] = {9,11,0,2,4,5,7};
 		note = tbl[*pString-'a'];
 		pString++;
 		if( *pString == '+' ) {
@@ -245,18 +246,18 @@ bool SeqInputMML::GetNote( const wchar_t *pString, DWORD defaultTick, char octav
 			note--;
 			pString++;
 		}
-	}else if( *pString >= 'r' ) {
-		note = -1;
+	}else if( *pString == 'r' ) {
+		isRest = true;
 		pString++;
-	}
-	if( note == -2 )
+	}else{
 		return true;
+	}
 
+	// 音調を取得
 	DWORD gateTime = GetNoteTick( pString, defaultTick, &pString );
 
-	if( note != -1 )
+	if( !isRest )
 		note += octave * 12;
-
 	if( pNote )
 		*pNote = (char)note;
 	if( pGateTime )
