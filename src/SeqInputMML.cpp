@@ -40,7 +40,7 @@ bool SeqInputMML::Init( SoundManager *pManager )
 		ss.pVolume	 = new SoundEffectVolume();						// Volume エフェクタを連結
 		ss.pSoundSet->Push( ss.pVolume );								// …をサウンドセットにつっこむ
 		m_pManager->Push( ss.pSoundSet );
-		m_holder[i] = ss;
+		m_info.holder[i] = ss;
 	}
 
 	m_playIndex = 0;
@@ -69,7 +69,7 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 	if( token.track >= MAX_TRACK )
 		return 0;
 
-	SOUNDSET *pSS = &m_holder[ token.track ];
+	SOUNDSET *pSS = &m_info.holder[ token.track ];
 
 	switch( token.command )
 	{
@@ -103,7 +103,13 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 					switch( token.param ) {
 						default:
 						case 0:	pg = EffectGen::SQUARE;		break;
-						case 1:	pg = EffectGen::TRIANGLE;	break;
+						case 1:	if( m_info.isFcMode ) {
+									pg = EffectGen::FCTRIANGLE;
+									pSS->pADSR->ChangeParam(  1, 0, 0, 1, 0  );
+								}else{
+									pg = EffectGen::TRIANGLE;
+								}
+							break;
 						case 2:	pg = EffectGen::SAW;		break;
 						case 3:	pg = EffectGen::SINEWAVE;	break;
 						case 4:	pg = EffectGen::FCNOISE_L;	break;
@@ -119,6 +125,8 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 					m_tickParSec = token.param;
 				break;
 		case CMD_ADSR:
+					if( m_info.isFcMode && pSS->pGen->GetType() == EffectGen::FCTRIANGLE )
+						break;	// FCモードでベースはADSR禁止
 					pSS->pADSR->ChangeParam(  token.u1.paramADSR.aPower
 											, token.u1.paramADSR.aTime
 											, token.u1.paramADSR.dTime
@@ -127,6 +135,9 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 				break;
 		case CMD_VOLUME:
 					pSS->pVolume->ChangeVolume( token.param/381.0f );
+				break;
+		case CMD_FCMODE:
+					m_info.isFcMode = token.param ? true : false;
 				break;
 	}
 
@@ -183,7 +194,7 @@ void SeqInputMML::Stop()
 	// ノートオフ
 	CriticalBlock cb( &m_pManager->m_cs );
 	for( int i=0; i<MAX_TRACK; i++ ) {
-		m_holder[i].pADSR->NoteOff();
+		m_info.holder[i].pADSR->NoteOff();
 	}
 }
 
@@ -539,6 +550,20 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 			continue;
 		}
 
+		// 定義？
+		if( wcsncmp( pSource, L"#fc(", 4 ) == 0 ) {
+			std::vector<std::wstring> params = GetParams( pSource+4, &pSource );
+			if( params.size() != 1 )
+				ERR(21)	// FC引数の数が不正
+			token.command = CMD_FCMODE;
+			token.gateTick = 0;
+			token.param = (int)_wtoi( params[0].c_str() );
+			if( token.param & ~1 )
+				ERR(21)
+			pTokens->push_back( token );
+			continue;
+		}
+
 		// Vibratoエフェクト指定？
 		if( wcsncmp( pSource, L"vibrato(", 8 ) == 0 ) {
 			std::vector<std::wstring> params = GetParams( pSource+8, &pSource );
@@ -851,6 +876,7 @@ const wchar_t* SeqInputMML::GetErrorString( int errorCode )
 		case 18:return L"パラメータブロック( ( )が閉じられていない";
 		case 19:return L"不明な命令があります";
 		case 20:return L"VIBRATOの引数が無効";
+		case 21:return L"#FCの引数が無効 0 か 1 を指定"; 
 	}
 	return L"不明なエラー";
 }

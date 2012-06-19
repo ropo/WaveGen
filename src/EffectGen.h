@@ -11,6 +11,7 @@ public:
 		,SINEWAVE	// 正弦波
 		,FCNOISE_L	// ファミコンノイズ(長)
 		,FCNOISE_S	// ファミコンノイズ(短)
+		,FCTRIANGLE // ファミコン三角(16段階)
 		,SILENT		// 無音
 	};
 
@@ -27,9 +28,12 @@ public:
 	void ChangeType( eTYPE type );
 	void ChangeSquareDuty( float duty );
 
+	eTYPE GetType();
+
 private:
 	float EffectSquare( bool isFirst );
 	float EffectTriangle( bool isFirst );
+	float EffectFcTriangle( bool isFirst );
 	float EffectSaw( bool isFirst );
 	float EffectSinewave( bool isFirst );
 	float EffectFcNoise( bool isFirst );

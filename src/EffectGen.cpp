@@ -70,6 +70,9 @@ void EffectGen::ChangeType( eTYPE type )
 			m_fncEffect = &EffectGen::EffectFcNoise;
 			m_fcls = 6;
 			break;
+		case FCTRIANGLE:
+			m_fncEffect = &EffectGen::EffectFcTriangle;
+			break;
 		case SILENT:
 		default:
 			m_fncEffect = &EffectGen::EffectSilent;
@@ -91,6 +94,11 @@ void EffectGen::ChangeFCNoiseFreq( BYTE note )
 void EffectGen::ChangeSquareDuty( float duty )
 {
 	m_squareDuty = MinMax( duty, FLT_MIN, 1.0f-FLT_EPSILON );
+}
+
+EffectGen::eTYPE EffectGen::GetType()
+{
+	return m_type;
 }
 
 void EffectGen::Release()
@@ -138,6 +146,17 @@ float EffectGen::EffectTriangle( bool )
 
 	if( v >= 2.0f )	return 3.0f-v;
 	else			return v-1.0f;
+}
+
+// ファミコン三角波
+float EffectGen::EffectFcTriangle( bool )
+{
+	float v = CalcLiner( 0, m_tph, m_blockCount ) * 4.0f;
+
+	if( v >= 2.0f )	v = 3.0f-v;
+	else			v = v-1.0f;
+
+	return floor(v*8) / 8;
 }
 
 // のこぎり波
