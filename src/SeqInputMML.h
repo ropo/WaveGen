@@ -53,6 +53,11 @@ private:
 		EffectGen::eTYPE programNo;
 	}SOUNDSET;
 
+	typedef struct tagGLOBALINFO {
+		bool		isFcMode;
+		SOUNDSET	holder[MAX_TRACK];
+	}GLOBALINFO;
+
 	enum eCMD {
 		 CMD_TEMPO
 		,CMD_END
@@ -64,6 +69,7 @@ private:
 		,CMD_ADSR
 		,CMD_VIBRATO
 		,CMD_VOLUME
+		,CMD_FCMODE
 	};
 	typedef struct tagTOKEN{
 		eCMD		command;		// コマンド
@@ -98,7 +104,7 @@ private:
 	DWORD PlaySeq( DWORD index );
 	void  Release();
 
-	SOUNDSET				m_holder[MAX_TRACK];
+	GLOBALINFO				m_info;
 	SoundManager			*m_pManager;
 	std::vector<TOKEN>		m_sequence;			// シーケンスデータ
 	DWORD					m_playIndex;		// 現在のシーケンス再生インデックス
