@@ -12,3 +12,4 @@ bin/
 *.vcxproj.user
 *.csproj.user
 *.opensdf
+*.exe

@@ -152,9 +152,14 @@ bool SeqInputMML::Tick( DWORD dwTime )
 		return true;
 	if( m_sequence.size() <= m_playIndex )
 		return true;
+	DWORD deltaTime = dwTime - m_prevTime;
+	if( deltaTime <= 10 )
+		return true;
 
-	DWORD totalTick = (dwTime - m_startTime) * m_tickParSec / 1000;
-	while( m_nextTick <= totalTick ) {
+	DWORD deltaTick = deltaTime * m_tickParSec / 1000;
+	m_totalTick += deltaTick;
+	m_prevTime = dwTime;
+	while( m_nextTick <= m_totalTick ) {
 		if( m_sequence.size() <= m_playIndex ) {
 			m_isStop = true;
 			if( m_fncPlayFinidhed )
@@ -162,8 +167,7 @@ bool SeqInputMML::Tick( DWORD dwTime )
 			return true;
 		}
 
-
-		if( m_nextTick > totalTick )
+		if( m_nextTick > m_totalTick )
 			return false;
 
 		m_nextTick += PlaySeq( m_playIndex++ );
@@ -177,8 +181,9 @@ void SeqInputMML::Play( DWORD dwTime, void(*playFinished)(void*), void *pPlayFin
 	m_playFinishedParam = pPlayFinishedParam;
 	m_fncPlayFinidhed = playFinished;
 
-	m_startTime = dwTime;
-	m_totalTick = 0;
+	m_prevTime = dwTime;
+	m_totalTick = m_info.playSkip;
+	m_tickParSec = 0;
 	m_playIndex = 0;
 	m_nextTick = 0;
 	m_isStop = false;
@@ -198,11 +203,17 @@ void SeqInputMML::Stop()
 	}
 }
 
+void SeqInputMML::GLOBALINFO::Reset()
+{
+	isFcMode = false;
+	playSkip = 0;
+}
+
 // MMLをコンパイルする
 SeqInputMML::COMPILEDINFO SeqInputMML::CompileMML( const wchar_t *pMML )
 {
 	COMPILEDINFO compiledInfo;
-	compiledInfo.errorCode = 0;
+	m_info.Reset();
 
 	// フェーズ１
 	const wchar_t *pPreCompiled = CompilePhase1( pMML, &compiledInfo.errorCode, &compiledInfo.errorLine );
@@ -218,11 +229,39 @@ SeqInputMML::COMPILEDINFO SeqInputMML::CompileMML( const wchar_t *pMML )
 	// フェーズ３
 	m_sequence = CompilePhase3( std::move( m_sequence ) );
 
+	// Tick数を足しこむアルゴリズム関数
+	struct AlgTotalTick {
+		DWORD operator()(DWORD sum, TOKEN token){ return sum + token.gateTick; }
+	};
+
 	// Tick数を数える
-	compiledInfo.maxTickCount = 0;
-	for( std::vector<TOKEN>::iterator itr=m_sequence.begin(); itr!=m_sequence.end(); ++itr )
-		compiledInfo.maxTickCount += itr->gateTick;
-	m_compiledInfo = compiledInfo;
+	compiledInfo.maxTickCount = accumulate( m_sequence.begin(), m_sequence.end(), 0, AlgTotalTick() );
+
+	// 特定のコマンドを処理する
+	std::vector<std::vector<TOKEN>::iterator> debugInfos;
+	for( std::vector<TOKEN>::iterator itr=m_sequence.begin(); itr!=m_sequence.end(); ++itr ) {
+		// トレース情報
+		if( itr->command == CMD_TRACEINFO )
+			debugInfos.push_back( itr );
+		// 早送り
+		if( itr->command == CMD_PLAYSKIP )
+			m_info.playSkip = accumulate( m_sequence.begin(), itr, 0, AlgTotalTick() );
+	}
+
+	// 早送り位置が終端以降はダメ
+	if( m_info.playSkip >= compiledInfo.maxTickCount )
+		m_info.playSkip = 0;
+
+/*
+	// トレース情報があればその位置の状態を生成
+	if( (compiledInfo.traceInfoCount = debugInfos.size()) > 0 ) {
+		TRACEINFO *pTI = compiledInfo.pTraceInfo = new TRACEINFO[compiledInfo.traceInfoCount];
+		for( std::vector<std::vector<TOKEN>::iterator>::iterator itr=debugInfos.begin(); itr!=debugInfos.end(); ++itr ) {
+			pTI->track = (*itr)->track;
+			pTI->tick = accumulate( m_sequence.begin(), *itr, 0, AlgTotalTick() );
+		}
+	}
+*/
 
 	return std::move( compiledInfo );
 }
@@ -501,6 +540,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 	DWORD	defaultTick = TICKCOUNT / 4;
 	int		noteOnGate = 80;
 
+	// 音源リセット
 	for( int i=0; i<MAX_TRACK; i++ ) {
 		// 音色
 		token.command = CMD_PROGRAM_CHANGE;
@@ -512,6 +552,18 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 		token.command = CMD_VOLUME;
 		token.param = 100;
 		token.gateTick = 0;
+		trackWork[i].tokens.push_back( token );
+
+		// ADSR無効
+		token.command = CMD_ADSR;
+		token.gateTick = 0;
+		token.u1.paramADSR.Reset();
+		trackWork[i].tokens.push_back( token );
+
+		// Vib無効
+		token.command = CMD_VIBRATO;
+		token.gateTick = 0;
+		token.u1.paramVibrato.Reset();
 		trackWork[i].tokens.push_back( token );
 	}
 	emptyTrackCount = trackWork[0].tokens.size();
@@ -582,16 +634,7 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 
 			// hz が 0 もしくは Time がすべて 0 なら解除
 			if( token.u1.paramVibrato.hz == 0 || (token.u1.paramVibrato.aTime == 0 && token.u1.paramVibrato.dTime == 0 && token.u1.paramVibrato.sTime == 0 && token.u1.paramVibrato.rTime == 0 ) )
-			{
-				token.u1.paramVibrato.delayTime	= 0;
-				token.u1.paramVibrato.hz		= 0;
-				token.u1.paramVibrato.aPower	= 0;
-				token.u1.paramVibrato.aTime		= 0;
-				token.u1.paramVibrato.dTime		= 0;
-				token.u1.paramVibrato.sPower	= 0;
-				token.u1.paramVibrato.sTime		= 0;
-				token.u1.paramVibrato.rTime		= 0;
-			}
+				token.u1.paramVibrato.Reset();
 
 			pTokens->push_back( token );
 			continue;
@@ -612,6 +655,10 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 		}
 
 		switch( *pSource ) {
+			case '!':	token.command = CMD_TRACEINFO;
+						token.param = GetNumber( pSource+1, &pSource );
+						pTokens->push_back( token );
+					break;
 			case 'o':{	const wchar_t *pStart = pSource+1;
 						currentOctave = GetNumber( pStart, &pSource );
 						if( pStart == pSource || currentOctave>8 )
@@ -645,6 +692,10 @@ std::vector<SeqInputMML::TOKEN> SeqInputMML::CompilePhase2( const wchar_t *pSour
 			case '@':	if( pSource[1] == 'w' ) {
 							token.command = CMD_DUTY_CHANGE;
 							token.param = GetNumber( pSource+2, &pSource );
+						}else if( pSource[1] == '@' ) {
+							token.command = CMD_PLAYSKIP;
+							token.param = GetNumber( pSource+2, &pSource );
+							pTokens->push_back( token );
 						}else{
 							token.command = CMD_PROGRAM_CHANGE;
 							token.param = GetNumber( pSource+1, &pSource );

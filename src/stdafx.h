@@ -16,6 +16,7 @@
 #include <string>
 #include <cctype>
 #include <algorithm>
+#include <numeric>
 #include <fstream>
 
 #define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=nullptr;}}
