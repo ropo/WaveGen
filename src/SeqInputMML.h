@@ -5,10 +5,22 @@
 class SeqInputMML : public SeqInputBase
 {
 public:
+	typedef struct tagTRACEINFO {
+		BYTE	track;
+		DWORD	tick;
+	}TRACEINFO;
 	typedef struct tagCOMPILEDINFO {
 		int		errorCode;
 		DWORD	errorLine;
 		DWORD	maxTickCount;
+		int		traceInfoCount;
+		TRACEINFO *pTraceInfo;
+
+		tagCOMPILEDINFO(){
+			errorCode = 0;
+			traceInfoCount = 0;
+			pTraceInfo = nullptr;
+		}
 	}COMPILEDINFO;
 
 	SeqInputMML();
@@ -32,6 +44,17 @@ private:
 		float	sTime;
 		float	rTime;
 		float	hz;
+
+		void Reset() {
+			delayTime	= 0;
+			hz			= 0;
+			aPower		= 0;
+			aTime		= 0;
+			dTime		= 0;
+			sPower		= 0;
+			sTime		= 0;
+			rTime		= 0;
+		}
 	}PARAMVIBRATO;
 
 	typedef struct tagSOUNDSET {
@@ -55,12 +78,16 @@ private:
 
 	typedef struct tagGLOBALINFO {
 		bool		isFcMode;
+		DWORD		playSkip;
 		SOUNDSET	holder[MAX_TRACK];
+		void Reset();
 	}GLOBALINFO;
 
 	enum eCMD {
 		 CMD_TEMPO
 		,CMD_END
+		,CMD_TRACEINFO
+		,CMD_PLAYSKIP
 		,CMD_NOTE_ON
 		,CMD_NOTE_OFF
 		,CMD_NOTE_REST
@@ -82,6 +109,14 @@ private:
 				float dTime;
 				float sPower;
 				float rTime;
+
+				void Reset() {
+					aPower = 1;
+					aTime = 0;
+					dTime = 0;
+					sPower = 1;
+					rTime = 0;
+				}
 			}paramADSR;
 			struct tagNOTEON{		// CMD_NOTE_ON 用パラメータ
 				BYTE	note;
@@ -111,9 +146,8 @@ private:
 	DWORD					m_totalTick;		// 再生開始から現在までのTick値
 	DWORD					m_nextTick;			// 次のSequenceを実行するTick
 	DWORD					m_tickParSec;		// １秒間のTick値
-	DWORD					m_startTime;		// 再生開始時間(ms)
+	DWORD					m_prevTime;			// 直前フレームの時間(ms)
 	bool					m_isStop;			// 停止中ならtrue
-	COMPILEDINFO			m_compiledInfo;		// 最上にコンパイルされた情報
 
 	void(*m_fncPlayFinidhed)( void* );			// 再生終了時にコールバックされる
 	void					*m_playFinishedParam;

@@ -16,6 +16,7 @@
 #include <string>
 #include <cctype>
 #include <algorithm>
+#include <numeric>
 #include <fstream>
 
 #define SAFE_RELEASE(x)	{if(x){(x)->Release();(x)=nullptr;}}
@@ -36,6 +37,8 @@
 #include "SoundEffectVolume.h"
 #include "SoundEffectVibrato.h"
 #include "SeqInputMML.h"
+
+#include "WinBase.h"
 
 template<typename T> inline T MinMax( T v, T min, T max ) {
 	if( v > max )	return max;
