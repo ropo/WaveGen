@@ -31,7 +31,7 @@ namespace WaveGenEditor
         private void frmMain_Load(object sender, EventArgs e)
         {
             rchMML.LanguageOption = RichTextBoxLanguageOptions.UIFonts;
-            rchMML.Font = new Font( Resources.DefaultFontName,9);
+            rchMML.Font = new Font(Resources.DefaultFontName, 9);
             waveGen = new WaveGenIF();
             waveGen.CreateWaveGen(Handle);
         }
@@ -45,11 +45,11 @@ namespace WaveGenEditor
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             // F5 キーは[Play]
-            if ((int)keyData == (int)Keys.F5 )
+            if ((int)keyData == (int)Keys.F5)
             {
                 cmdPlay.Checked = !cmdPlay.Checked;
                 return true;
-            } 
+            }
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
@@ -63,7 +63,7 @@ namespace WaveGenEditor
             if (DialogResult.OK != cmnOpenDlg.ShowDialog())
                 return;
 
-            rchMML.Text = File.ReadAllText( cmnOpenDlg.FileName, Encoding.GetEncoding("shift_jis") );
+            rchMML.Text = File.ReadAllText(cmnOpenDlg.FileName, Encoding.GetEncoding("shift_jis"));
             cmnSaveDlg.FileName = cmnOpenDlg.FileName;
             stsNotify.Text = Resources.Loaded;
         }
@@ -154,7 +154,7 @@ namespace WaveGenEditor
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
- 
+
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (waveGen != null)
@@ -173,7 +173,7 @@ namespace WaveGenEditor
         {
             if (cmdPlay.Checked)
             {
-                if (chkAutoSave.Checked && isWaveSave==false )
+                if (chkAutoSave.Checked && isWaveSave == false)
                     cmdSaveFile.PerformClick();
 
                 cmdPlay.Text = Resources.StopButtonText + " (F5)";
@@ -181,14 +181,16 @@ namespace WaveGenEditor
                 UInt32 errorLine = 0;
                 if (waveGen.CompileMML(rchMML.Text, ref errorCode, ref errorLine, isWaveSave, dlgPlayFinished_, this))
                 {
-                    stsNotify.Text = Resources.MMLerror.Replace( "_LINE_", errorLine.ToString() ).Replace( "_MSG_", WaveGenIF.GetErrorString(errorCode));
+                    stsNotify.Text = Resources.MMLerror.Replace("_LINE_", errorLine.ToString()).Replace("_MSG_", WaveGenIF.GetErrorString(errorCode));
                     MoveLine((int)errorLine);
                     System.Media.SystemSounds.Exclamation.Play();
                     cmdPlay.Checked = false;
                     return;
                 }
                 stsNotify.Text = "";
-            }else{
+            }
+            else
+            {
                 if (waveGen != null)
                     waveGen.Stop();
                 cmdPlay.Text = Resources.PlayButtonText + " (F5)";
@@ -200,13 +202,13 @@ namespace WaveGenEditor
             pThis.dlgPlayfinished(WaveGen);
         }
         delegate void dlgPlayfinishedInvoke(WaveGenIF WaveGen);
-        void dlgPlayfinished( WaveGenIF WaveGen )
+        void dlgPlayfinished(WaveGenIF WaveGen)
         {
             BeginInvoke((MethodInvoker)delegate
             {
                 if (cmdPlay.Checked)
                     cmdPlay.Checked = false;
-            });   
+            });
         }
 
         /// <summary>
@@ -217,15 +219,15 @@ namespace WaveGenEditor
         {
             string str = rchMML.Text;
 
-            int row=1, startPos=0, endPos;
-            for (endPos = 0;(endPos = str.IndexOf('\n', startPos)) > -1; row++)
+            int row = 1, startPos = 0, endPos;
+            for (endPos = 0; (endPos = str.IndexOf('\n', startPos)) > -1; row++)
             {
                 if (line == row)
                 {
                     rchMML.SelectionStart = startPos;
                     return;
                 }
-                       
+
                 startPos = endPos + 1;
             }
         }
@@ -251,15 +253,15 @@ namespace WaveGenEditor
         }
         private void cmdADSRParamEdit_Click(object sender, EventArgs e)
         {
-            if (cmdADSRParamEdit.Checked )
+            if (cmdADSRParamEdit.Checked)
                 return;
 
             frmADSRParam frm = new frmADSRParam();
-            frm.FormClosing += new FormClosingEventHandler( delegate{ cmdADSRParamEdit.Checked = false; } );
+            frm.FormClosing += new FormClosingEventHandler(delegate { cmdADSRParamEdit.Checked = false; });
             cmdADSRParamEdit.Checked = true;
             frm.Show(this);
         }
-        
+
         private void cmdEditCopy_Click(object sender, EventArgs e)
         {
             rchMML.Copy();
@@ -287,12 +289,24 @@ namespace WaveGenEditor
 
         private void keyPreview_EventNoteOn(object sender, KeybordControl.KeyNoteEventArgs e)
         {
-            waveGen.PreviewNoteOn(e.note);
+            waveGen.PreviewNoteOn(e.note, e.velocity);
         }
 
         private void keyPreview_EventChangeType(object sender, byte type)
         {
             waveGen.PreviewGenType(type);
+        }
+
+        private void cmdPreviewPiano_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cmdPreviewPiano.Checked)
+            {
+                keyPreview.Visible = true;
+            }
+            else
+            {
+                keyPreview.Visible = false;
+            }
         }
     }
 }

@@ -24,7 +24,7 @@ namespace WaveGenEditor
     class WaveGenIF
     {
         private IntPtr hHandle;
-        
+
         public WaveGenIF()
         {
             cbInstancePlayFinished = cbPlayFinished;
@@ -37,7 +37,7 @@ namespace WaveGenEditor
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message, "WaveGenEditor",MessageBoxButtons.OK, MessageBoxIcon.Question);
+                MessageBox.Show(e.Message, "WaveGenEditor", MessageBoxButtons.OK, MessageBoxIcon.Question);
                 return true;
             }
             return hHandle == null;
@@ -49,31 +49,31 @@ namespace WaveGenEditor
             DllReleaseWaveGen(hHandle);
             hHandle = IntPtr.Zero;
         }
-        public bool CompileMML(string mmlString, ref int errorCode, ref UInt32 errorLine, bool isWave, delegatePlayFinished dlgPlayFinished, object parent )
+        public bool CompileMML(string mmlString, ref int errorCode, ref UInt32 errorLine, bool isWave, delegatePlayFinished dlgPlayFinished, object parent)
         {
             if (hHandle == IntPtr.Zero)
                 return true;
             lock (this)
             {
-                CallbackParams info = new CallbackParams(this,parent,dlgPlayFinished);
+                CallbackParams info = new CallbackParams(this, parent, dlgPlayFinished);
                 int hash = this.GetHashCode();
                 callbacks[hash] = info;
-                return DllCompileMML(hHandle, mmlString, ref errorCode, ref errorLine, (byte)(isWave?1:0), cbInstancePlayFinished, hash );
+                return DllCompileMML(hHandle, mmlString, ref errorCode, ref errorLine, (byte)(isWave ? 1 : 0), cbInstancePlayFinished, hash);
             }
         }
-        public void SetWaveFileName( string fileName )
+        public void SetWaveFileName(string fileName)
         {
             if (hHandle == IntPtr.Zero)
                 return;
 
-            DllSetWaveFileName( hHandle, fileName );
+            DllSetWaveFileName(hHandle, fileName);
         }
         public static string GetErrorString(int errorCode)
         {
             try
             {
                 StringBuilder errorMessage = new StringBuilder(512);
-                DllGetErrorString(errorCode, errorMessage, errorMessage.Capacity );
+                DllGetErrorString(errorCode, errorMessage, errorMessage.Capacity);
                 return errorMessage.ToString();
             }
             catch (Exception e)
@@ -89,11 +89,11 @@ namespace WaveGenEditor
             DllStop(hHandle);
         }
 
-        public void PreviewNoteOn(byte note)
+        public void PreviewNoteOn(byte note,byte velocity)
         {
             if (hHandle == IntPtr.Zero)
                 return;
-            DllPreviewNoteOn(hHandle, note);
+            DllPreviewNoteOn(hHandle, note, velocity);
         }
 
         public void PreviewNoteOff()
@@ -110,20 +110,20 @@ namespace WaveGenEditor
             DllPreviewGenType(hHandle, type);
         }
 
-        public void PreviewADSR(float aPower, float aTime, float dTime, float sPower, float rTime )
+        public void PreviewADSR(float aPower, float aTime, float dTime, float sPower, float rTime)
         {
             if (hHandle == IntPtr.Zero)
                 return;
-            DllPreviewSetADSR(hHandle, aPower, aTime, dTime, sPower, rTime );
+            DllPreviewSetADSR(hHandle, aPower, aTime, dTime, sPower, rTime);
         }
-        
+
         public delegate void delegatePlayFinished(WaveGenIF wg, object pParam);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void callbackPlayFinished(IntPtr pParam);
         private readonly callbackPlayFinished cbInstancePlayFinished;
         public class CallbackParams
         {
-            public CallbackParams(WaveGenIF _this,object parent,delegatePlayFinished dlg)
+            public CallbackParams(WaveGenIF _this, object parent, delegatePlayFinished dlg)
             {
                 m_this = _this;
                 m_parent = parent;
@@ -131,7 +131,7 @@ namespace WaveGenEditor
             }
             public void Exec()
             {
-                m_dlg( m_this,m_parent);
+                m_dlg(m_this, m_parent);
             }
             WaveGenIF m_this;
             object m_parent;
@@ -156,9 +156,9 @@ namespace WaveGenEditor
         const string DLLNAME = "WaveGenDll.dll";
 #endif
 
-        [DllImport(DLLNAME, EntryPoint = "CreateWaveGen" )]
+        [DllImport(DLLNAME, EntryPoint = "CreateWaveGen")]
         private extern static IntPtr DllCreateWaveGen(IntPtr hWnd);
-        [DllImport(DLLNAME, EntryPoint = "ReleaseWaveGen" )]
+        [DllImport(DLLNAME, EntryPoint = "ReleaseWaveGen")]
         private extern static void DllReleaseWaveGen(IntPtr hInterface);
         [DllImport(DLLNAME, EntryPoint = "CompileMML", CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.I1)]
@@ -170,7 +170,7 @@ namespace WaveGenEditor
         [DllImport(DLLNAME, EntryPoint = "SetWaveFileName", CharSet = CharSet.Unicode)]
         private extern static void DllSetWaveFileName(IntPtr hInterface, String fileName);
         [DllImport(DLLNAME, EntryPoint = "PreviewNoteOn")]
-        private extern static void DllPreviewNoteOn(IntPtr hInterface, byte note);
+        private extern static void DllPreviewNoteOn(IntPtr hInterface, byte note,byte velocity);
         [DllImport(DLLNAME, EntryPoint = "PreviewNoteOff")]
         private extern static void DllPreviewNoteOff(IntPtr hInterface);
         [DllImport(DLLNAME, EntryPoint = "PreviewGenType")]

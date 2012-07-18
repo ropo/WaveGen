@@ -41,6 +41,8 @@
             this.cmdWriteWaveFile = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.cmdAppExit = new System.Windows.Forms.ToolStripMenuItem();
+            this.表示VToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cmdPreviewPiano = new System.Windows.Forms.ToolStripMenuItem();
             this.cmdParamEdit = new System.Windows.Forms.ToolStripMenuItem();
             this.cmdADSRParamEdit = new System.Windows.Forms.ToolStripMenuItem();
             this.cmdFMParamEdit = new System.Windows.Forms.ToolStripMenuItem();
@@ -91,6 +93,7 @@
             // 
             this.menuMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cmdFile,
+            this.表示VToolStripMenuItem,
             this.cmdParamEdit,
             this.cmdOpenWeb});
             this.menuMain.Location = new System.Drawing.Point(0, 0);
@@ -170,6 +173,24 @@
             this.cmdAppExit.Text = "終了(&X)";
             this.cmdAppExit.Click += new System.EventHandler(this.cmdAppExit_Click);
             // 
+            // 表示VToolStripMenuItem
+            // 
+            this.表示VToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.cmdPreviewPiano});
+            this.表示VToolStripMenuItem.Name = "表示VToolStripMenuItem";
+            this.表示VToolStripMenuItem.Size = new System.Drawing.Size(62, 22);
+            this.表示VToolStripMenuItem.Text = "表示(&V)";
+            // 
+            // cmdPreviewPiano
+            // 
+            this.cmdPreviewPiano.Checked = true;
+            this.cmdPreviewPiano.CheckOnClick = true;
+            this.cmdPreviewPiano.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cmdPreviewPiano.Name = "cmdPreviewPiano";
+            this.cmdPreviewPiano.Size = new System.Drawing.Size(172, 22);
+            this.cmdPreviewPiano.Text = "プレビューピアノ";
+            this.cmdPreviewPiano.CheckedChanged += new System.EventHandler(this.cmdPreviewPiano_CheckedChanged);
+            // 
             // cmdParamEdit
             // 
             this.cmdParamEdit.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -182,14 +203,14 @@
             // cmdADSRParamEdit
             // 
             this.cmdADSRParamEdit.Name = "cmdADSRParamEdit";
-            this.cmdADSRParamEdit.Size = new System.Drawing.Size(109, 22);
+            this.cmdADSRParamEdit.Size = new System.Drawing.Size(152, 22);
             this.cmdADSRParamEdit.Text = "ADSR";
             this.cmdADSRParamEdit.Click += new System.EventHandler(this.cmdADSRParamEdit_Click);
             // 
             // cmdFMParamEdit
             // 
             this.cmdFMParamEdit.Name = "cmdFMParamEdit";
-            this.cmdFMParamEdit.Size = new System.Drawing.Size(109, 22);
+            this.cmdFMParamEdit.Size = new System.Drawing.Size(152, 22);
             this.cmdFMParamEdit.Text = "FM";
             this.cmdFMParamEdit.Visible = false;
             // 
@@ -402,6 +423,8 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem cmdMenuPlay;
         private KeybordControl keyPreview;
+        private System.Windows.Forms.ToolStripMenuItem 表示VToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cmdPreviewPiano;
     }
 }
 

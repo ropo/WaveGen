@@ -148,7 +148,7 @@ WAVEGENDLL_API void WINAPI Stop( HANDLE hInterface )
 	}
 }
 
-WAVEGENDLL_API void WINAPI PreviewNoteOn( HANDLE hInterface, unsigned char note )
+WAVEGENDLL_API void WINAPI PreviewNoteOn( HANDLE hInterface, unsigned char note, unsigned char velocity )
 {
 	if( hInterface == NULL )
 		return;
@@ -159,6 +159,7 @@ WAVEGENDLL_API void WINAPI PreviewNoteOn( HANDLE hInterface, unsigned char note 
 		pThis->pPrevireGen->ChangeFCNoiseFreq( note );
 	else
 		pThis->pPrevireGen->ChangeFreq( SeqInputMML::GetFreq( note ) );
+	pThis->pPreviewVolume->ChangeVolume( velocity / 127.0f * 0.2f );
 	pThis->pPreviewADSR->NoteOn();
 }
 

@@ -8,7 +8,7 @@ namespace WaveGenEditor
     public partial class frmADSRParam : Form
     {
         private Bitmap backBuffer;
-        private bool isValueCahnged=false;
+        private bool isValueCahnged = false;
         private WaveGenIF waveGen = null;
 
         public frmADSRParam()
@@ -25,7 +25,7 @@ namespace WaveGenEditor
         {
             waveGen = new WaveGenIF();
             waveGen.CreateWaveGen(Handle);
-            
+
             txtAPower.Text = "1.00";
             txtATime.Text = "0.05";
             txtDTime.Text = "0.03";
@@ -58,12 +58,12 @@ namespace WaveGenEditor
                 return;
             }
 
-            if( backBuffer != null )
+            if (backBuffer != null)
                 backBuffer.Dispose();
             int w = picbox.Width;
             int h = picbox.Height;
 
-            backBuffer = new Bitmap(w,h);
+            backBuffer = new Bitmap(w, h);
             Graphics grp = Graphics.FromImage(backBuffer);
 
             float totalTime, maxPower, xDiv, yDiv;
@@ -90,7 +90,7 @@ namespace WaveGenEditor
 
             Font guideFont = new Font("ＭＳ ゴシック", 9);
             // 描く！
-            Rectangle wh = new Rectangle(0,0,w,h);
+            Rectangle wh = new Rectangle(0, 0, w, h);
             LinearGradientBrush gbBack = new LinearGradientBrush(wh, Color.DimGray, Color.Black, LinearGradientMode.Vertical);
             grp.FillRectangle(gbBack, wh);
             gbBack.Dispose();
@@ -100,7 +100,7 @@ namespace WaveGenEditor
 
             DrawClipString(grp, guideFont, "aPower", Brushes.White, picbox.ClientRectangle, points[1]);
             DrawClipString(grp, guideFont, "sPower", Brushes.White, picbox.ClientRectangle, points[2]);
-            
+
             picbox.Invalidate();
         }
 
@@ -180,7 +180,7 @@ namespace WaveGenEditor
                     float dTime = float.Parse(txtDTime.Text);
                     float sPower = float.Parse(txtSPower.Text);
                     float rTime = float.Parse(txtRTime.Text);
-                    waveGen.PreviewADSR( aPower, aTime, dTime, sPower, rTime );
+                    waveGen.PreviewADSR(aPower, aTime, dTime, sPower, rTime);
                 }
                 catch
                 {
@@ -222,7 +222,7 @@ namespace WaveGenEditor
                 return;
             }
 
-            Clipboard.SetText( text );
+            Clipboard.SetText(text);
         }
 
         private void keyPreview_EventNoteOff(object sender, KeybordControl.KeyNoteEventArgs e)
@@ -232,7 +232,7 @@ namespace WaveGenEditor
 
         private void keyPreview_EventNoteOn(object sender, KeybordControl.KeyNoteEventArgs e)
         {
-            waveGen.PreviewNoteOn(e.note);
+            waveGen.PreviewNoteOn(e.note, e.velocity);
         }
 
         private void keyPreview_EventChangeType(object sender, byte type)

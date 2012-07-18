@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using jp.ropo;
 
 namespace WaveGenEditor
 {
@@ -21,9 +22,10 @@ namespace WaveGenEditor
         [DefaultValue(88)]
         public byte KeysCount
         {
-            get{ return keysCount; }
-            set{
-                if( value == keysCount )
+            get { return keysCount; }
+            set
+            {
+                if (value == keysCount)
                     return;
                 keysCount = value;
                 drawKeys();
@@ -54,14 +56,57 @@ namespace WaveGenEditor
 
         public class KeyNoteEventArgs
         {
-            public KeyNoteEventArgs(byte note)
+            public KeyNoteEventArgs(byte note, byte velocity=127)
             {
                 this.note = note;
+                this.velocity = velocity;
             }
             /// <summary>
             /// 鍵盤番号
             /// </summary>
             public byte note;
+
+            /// <summary>
+            /// ベロシティ 0-127
+            /// </summary>
+            public byte velocity;
+        }
+
+        private Win32MidiInPort midIn = new Win32MidiInPort();
+        private byte midiInLastOnKey = byte.MaxValue;
+        private int midiInDev = -1;
+        private byte midiVelocityConst = byte.MaxValue;
+        private bool MidiInAttach()
+        {
+            if( midiInDev >= 0 )
+            {
+                if (midIn.Open(midiInDev) == false)
+                    return false;
+                midIn.OnNoteChange += delegate(byte ch, byte note, byte velocity, bool isOn)
+                {
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        if (ch != 0)
+                            return;
+                        if (isOn)
+                        {
+                            NoteOn(note, midiVelocityConst == byte.MaxValue ? velocity : midiVelocityConst);
+                            midiInLastOnKey = note;
+                        }
+                        else
+                        {
+                            if (midiInLastOnKey == note)
+                                NoteOff();
+                        }
+                    });
+                };
+                midIn.Start();
+            }
+            return true;
+        }
+        private void MidiInDetach()
+        {
+            midIn.Close();
         }
 
         public KeybordControl()
@@ -80,7 +125,7 @@ namespace WaveGenEditor
             rect.X = (int)((note / 12) * 70) + x;
             rect.Y = -1;
             rect.Width = (int)(isBlack ? 8 : 10);
-            rect.Height = (int)(isBlack ? this.Height*0.6f : this.Height);
+            rect.Height = (int)(isBlack ? this.Height * 0.6f : this.Height);
 
             rect.X = (int)Math.Ceiling(rect.X * (float)keyPitch / 10);
             rect.Width = (int)Math.Ceiling(rect.Width * (float)keyPitch / 10);
@@ -100,7 +145,7 @@ namespace WaveGenEditor
 
 
             // 
-            keyPitch = w / ((keysCount/12f)*7f);
+            keyPitch = w / ((keysCount / 12f) * 7f);
 
             //
             Rectangle rect;
@@ -114,7 +159,7 @@ namespace WaveGenEditor
                     }
                     else
                     {
-                        if( isCNoteDark && note %12 == 0 )
+                        if (isCNoteDark && note % 12 == 0)
                             grp.FillRectangle(Brushes.Gainsboro, rect);
                         else
                             grp.FillRectangle(Brushes.White, rect);
@@ -172,7 +217,7 @@ namespace WaveGenEditor
                 bool isBlack = GetNotePosition(note, out rect);
                 if (rect.Contains(x, y))
                 {
-                    if ( isBlack || pressNote != -1 )
+                    if (isBlack || pressNote != -1)
                         return note;
                     pressNote = note;
                 }
@@ -180,9 +225,9 @@ namespace WaveGenEditor
             return pressNote;
         }
 
-        private void NoteOn(int note)
+        private void NoteOn(int note, byte velocity)
         {
-            if (note == onNote )
+            if (note == onNote)
                 return;
             if (onNote != -1)
                 NoteOff();
@@ -190,7 +235,7 @@ namespace WaveGenEditor
                 return;
             onNote = note;
             if (EventNoteOn != null)
-                EventNoteOn(this, new KeyNoteEventArgs((byte)onNote));
+                EventNoteOn(this, new KeyNoteEventArgs((byte)onNote, velocity));
             drawKeys();
         }
 
@@ -204,9 +249,9 @@ namespace WaveGenEditor
 
         private void KeybordControl_MouseMove(object sender, MouseEventArgs e)
         {
-            if ( (e.Button & System.Windows.Forms.MouseButtons.Left) == 0 )
+            if ((e.Button & System.Windows.Forms.MouseButtons.Left) == 0)
                 return;
-            NoteOn( HitNote( e.X, e.Y ));
+            NoteOn(HitNote(e.X, e.Y),127);
         }
 
         private void KeybordControl_MouseDown(object sender, MouseEventArgs e)
@@ -214,7 +259,7 @@ namespace WaveGenEditor
             if ((e.Button & System.Windows.Forms.MouseButtons.Left) == 0)
                 return;
             this.Capture = true;
-            NoteOn(HitNote(e.X, e.Y));
+            NoteOn(HitNote(e.X, e.Y), 127);
         }
 
         private void KeybordControl_MouseUp(object sender, MouseEventArgs e)
@@ -236,7 +281,7 @@ namespace WaveGenEditor
             if (type >= items.Length)
                 return;
 
-            if( items[type].Checked )
+            if (items[type].Checked)
                 return;
 
             for (int i = 0; i < items.Length; i++)
@@ -244,7 +289,7 @@ namespace WaveGenEditor
                 items[i].Checked = (type == i);
             }
 
-            EventChangeType(this,type);
+            EventChangeType(this, type);
         }
 
         private void cmdChangeType0_Click(object sender, EventArgs e)
@@ -281,6 +326,25 @@ namespace WaveGenEditor
         {
             if (EventChangeType == null)
                 e.Cancel = true;
+        }
+
+        private void cmdSelectMidiInDev_Click(object sender, EventArgs e)
+        {
+            var dlg = new frmMidiDevice();
+            MidiInDetach();
+            dlg.SelectedIndex = midiInDev + 1;
+            dlg.VelocityConst = midiVelocityConst;
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                midiInDev = dlg.SelectedIndex - 1;
+                midiVelocityConst = dlg.VelocityConst;
+            }
+            if (MidiInAttach() == false)
+            {
+                MessageBox.Show("MIDIデバイスのオープンに失敗しました",this.Parent.Text);
+                midiInDev = -1;
+            }
+
         }
     }
 }
