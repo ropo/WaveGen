@@ -8,7 +8,7 @@ EffectGen::EffectGen()
 {
 	Reset();
 	ChangeFreq( 440 );
-	ChangeType( SQUARE );
+	ChangeProgram( SQUARE );
 	ChangeSquareDuty( 0.5f );
 }
 
@@ -16,7 +16,7 @@ EffectGen::EffectGen( float freq, eTYPE type )
 {
 	Reset();
 	ChangeFreq( freq );
-	ChangeType( type );
+	ChangeProgram( type );
 	ChangeSquareDuty( 0.5f );
 }
 
@@ -45,10 +45,10 @@ void EffectGen::ChangeFreqSweep( float fromFreq, float toFreq, float time )
 	}
 }
 
-void EffectGen::ChangeType( eTYPE type )
+void EffectGen::ChangeProgram(progID_t prog)
 {
-	m_type = type;
-	switch( type )
+	m_type = (eTYPE)prog;
+	switch(prog)
 	{
 		case SQUARE:
 			m_fncEffect = &EffectGen::EffectSquare;
@@ -96,7 +96,7 @@ void EffectGen::ChangeSquareDuty( float duty )
 	m_squareDuty = MinMax( duty, FLT_MIN, 1.0f-FLT_EPSILON );
 }
 
-EffectGen::eTYPE EffectGen::GetType()
+IMMLEffectGen::progID_t EffectGen::GetProgram()
 {
 	return m_type;
 }

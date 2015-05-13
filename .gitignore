@@ -3,6 +3,7 @@ Release/
 ipch/
 obj/
 bin/
+*.sln.ide/
 
 *.wav
 *.mp3

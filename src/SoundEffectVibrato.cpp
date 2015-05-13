@@ -4,7 +4,7 @@ SoundEffectVibrato::SoundEffectVibrato()
 {
 	m_setting.hz = m_setting.aTime = m_setting.dTime = m_setting.sTime = m_setting.rTime = m_setting.delayTime = m_setting.aPower = m_setting.sPower = m_setting.baseFreq = 0;
 	Reset();
-	m_effectFreqGen.ChangeType( EffectGen::TRIANGLE );	// 理想は SINEWAVE
+	m_effectFreqGen.ChangeProgram( EffectGen::TRIANGLE );	// 理想は SINEWAVE
 }
 
 SoundEffectVibrato::~SoundEffectVibrato()

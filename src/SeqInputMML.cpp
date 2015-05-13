@@ -33,7 +33,7 @@ bool SeqInputMML::Init( SoundManager *pManager )
 		ss.pSoundSet = new SoundEffectSet();
 		ss.pGen		 = new EffectGen( 220, EffectGen::SILENT );
 		ss.pVibrato  = new SoundEffectVibrato();
-		ss.pVibrato->SetEffectGen( ss.pGen );
+		ss.pVibrato->SetEffectGen( dynamic_cast<EffectGen*>(ss.pGen) );
 		ss.pSoundSet->Push( ss.pVibrato );
 		ss.pADSR	 = new SoundEffectADSR();						// ADSR エフェクタを連結
 		ss.pSoundSet->Push( ss.pADSR );									// …をサウンドセットにつっこむ
@@ -103,7 +103,7 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 					switch( token.param ) {
 						default:
 						case 0:	pg = EffectGen::SQUARE;		break;
-						case 1:	if( m_info.isFcMode ) {
+						case 1:	if( m_info.isGenMode == eGENMODE::FCMODE ) {
 									pg = EffectGen::FCTRIANGLE;
 									pSS->pADSR->ChangeParam(  1, 0, 0, 1, 0  );
 								}else{
@@ -115,17 +115,17 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 						case 4:	pg = EffectGen::FCNOISE_L;	break;
 						case 5:	pg = EffectGen::FCNOISE_S;	break;
 					}
-					pSS->pGen->ChangeType( pg );
+					pSS->pGen->ChangeProgram( pg );
 					pSS->programNo = pg;
 				}break;
 		case CMD_DUTY_CHANGE: {
-					pSS->pGen->ChangeSquareDuty( token.param / 1000.0f );
+					dynamic_cast<EffectGen*>(pSS->pGen)->ChangeSquareDuty( token.param / 1000.0f );
 				}break;
 		case CMD_TEMPO:
 					m_tickParSec = token.param;
 				break;
 		case CMD_ADSR:
-					if( m_info.isFcMode && pSS->pGen->GetType() == EffectGen::FCTRIANGLE )
+					if( m_info.isGenMode == eGENMODE::FCMODE && pSS->pGen->GetProgram() == EffectGen::FCTRIANGLE )
 						break;	// FCモードでベースはADSR禁止
 					pSS->pADSR->ChangeParam(  token.u1.paramADSR.aPower
 											, token.u1.paramADSR.aTime
@@ -137,7 +137,7 @@ DWORD SeqInputMML::PlaySeq( DWORD index )
 					pSS->pVolume->ChangeVolume( token.param/381.0f );
 				break;
 		case CMD_FCMODE:
-					m_info.isFcMode = token.param ? true : false;
+					m_info.isGenMode = token.param ? eGENMODE::FCMODE : eGENMODE::NORMAL;
 				break;
 	}
 
@@ -205,7 +205,7 @@ void SeqInputMML::Stop()
 
 void SeqInputMML::GLOBALINFO::Reset()
 {
-	isFcMode = false;
+	isGenMode = eGENMODE::NORMAL;
 	playSkip = 0;
 }
 

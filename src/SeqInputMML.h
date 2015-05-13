@@ -67,17 +67,23 @@ private:
 			isVibrato = false;
 		}
 		SoundEffectSet	*pSoundSet;
-		EffectGen		*pGen;
+		IMMLEffectGen	*pGen;
 		SoundEffectADSR	*pADSR;
 		SoundEffectVolume *pVolume;
 		SoundEffectVibrato *pVibrato;
 		bool isVibrato;
 		PARAMVIBRATO	vibratoParam;
-		EffectGen::eTYPE programNo;
+		IMMLEffectGen::progID_t programNo;
 	}SOUNDSET;
 
+	enum eGENMODE : unsigned char {
+		NORMAL,
+		FCMODE,
+		FMMODE,
+	};
+
 	typedef struct tagGLOBALINFO {
-		bool		isFcMode;
+		eGENMODE	isGenMode;
 		DWORD		playSkip;
 		SOUNDSET	holder[MAX_TRACK];
 		void Reset();

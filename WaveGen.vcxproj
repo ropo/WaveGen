@@ -15,12 +15,14 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>PsgGen</RootNamespace>
     <ProjectName>WaveGen</ProjectName>
+    <TargetPlatformVersion>8.1</TargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -104,6 +106,7 @@
     <ClInclude Include="src\AppMain.h" />
     <ClInclude Include="src\CriticalBlock.h" />
     <ClInclude Include="src\EffectGen.h" />
+    <ClInclude Include="src\IMMLEffectGen.h" />
     <ClInclude Include="src\SeqInputBase.h" />
     <ClInclude Include="src\SeqInputMML.h" />
     <ClInclude Include="src\SoundEffectADSR.h" />

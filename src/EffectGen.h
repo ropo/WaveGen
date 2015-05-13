@@ -1,10 +1,11 @@
 ﻿#pragma once
+#include "IMMLEffectGen.h"
 
 // 単調波形生成
-class EffectGen : public SoundEffectBase
+class EffectGen : public SoundEffectBase, public IMMLEffectGen
 {
 public:
-	enum eTYPE : unsigned char {
+	enum eTYPE : IMMLEffectGen::progID_t {
 		 SQUARE		// 矩形波
 		,TRIANGLE	// 三角波
 		,SAW		// のこぎり波
@@ -22,13 +23,14 @@ public:
 	void Reset();
 	void Effect( float *pBuffer, size_t size );
 
+	// IMMLEffectGen
 	void ChangeFreq( float freq );
 	void ChangeFCNoiseFreq( BYTE note );
 	void ChangeFreqSweep( float fromFreq, float toFreq, float time );
-	void ChangeType( eTYPE type );
-	void ChangeSquareDuty( float duty );
+	void ChangeProgram(IMMLEffectGen::progID_t prog);
+	IMMLEffectGen::progID_t GetProgram();
 
-	eTYPE GetType();
+	void ChangeSquareDuty( float duty );
 
 private:
 	float EffectSquare( bool isFirst );
